@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="ms_popup_box">
+      <div class="container">
+        <div class="ms_popup_header">
+          <div class="msp_header_icon">
+            <img
+              src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/6929904e2a85631be7392ee2_ms_cross.png"
+              alt="cross_icon"
+            />
+          </div>
+          <h3>Edit <span>YOUR SEARCH</span></h3>
+        </div>
+        <div class="ms_pop_tab_box">
+          <div class="ms_tab_header">
+            <div class="ms_tab_item" data-item="mstaboneway">
+              <p>One Way</p>
+            </div>
+            <div class="ms_tab_item" data-item="mstabroundtrip">
+              <p>Round Trip</p>
+            </div>
+            <div class="ms_tab_item" data-item="mstabmulticity">
+              <p>Multi-city</p>
+            </div>
+          </div>
+          <div class="ms_tab_cnt_wrapper">
+            <div class="ms_tab_cnt_item active" id="mstaboneway">
+              <div class="mstab_cntbox">
+                <div class="mspop_cnt_box">
+                  <p>From</p>
+                  <div class="mspop_cnt_item">
+                    <div class="mspop_cnt_item_icon">
+                      <img
+                        src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299269ccb9fc2ec39c70ca_plan_icon1.png"
+                        alt="icon"
+                      />
+                    </div>
+                    <p class="owfaname">Select Airport</p>
+                    <p class="owfaid"></p>
+                  </div>
+                </div>
+                <div class="mspop_cnt_box">
+                  <p>
+                    To
+                    <img
+                      src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299269992d97759a2c5742_dblarrow.png"
+                      alt=""
+                    />
+                  </p>
+                  <div class="mspop_cnt_item">
+                    <div class="mspop_cnt_item_icon">
+                      <img
+                        src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/692992693227baee55527900_plan_icon2.png"
+                        alt="icon"
+                      />
+                    </div>
+                    <p class="owtaname">Select Airport</p>
+                    <p class="owtaid"></p>
+                  </div>
+                </div>
+                <div class="mspop_cnt_box">
+                  <p>Date</p>
+                  <div class="mspop_cnt_item">
+                    <div class="mspop_cnt_item_icon">
+                      <img
+                        src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299366e47ff54456ae3b44_datems.png"
+                        alt="icon"
+                      />
+                    </div>
+                    <p class="owdateformated">Select Date</p>
+                    <p class="owdateastext"></p>
+                  </div>
+                </div>
+                <div class="mspop_cnt_box">
+                  <p>pax</p>
+                  <div class="mspop_cnt_item">
+                    <div class="mspop_cnt_item_icon">
+                      <img
+                        src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/6929936640fd29b7b68bea70_paxms.png"
+                        alt="icon"
+                      />
+                    </div>
+                    <p class="owpax">Passanger</p>
+                  </div>
+                </div>
+              </div>
+              <div class="search_flight">
+                <button class="oneway_search_btn" type="button">Search</button>
+              </div>
+            </div>
+            <div class="ms_tab_cnt_item" id="mstabroundtrip">
+              <div class="mstab_cntbox">
+                <div class="mspop_cnt_box">
+                  <p>From</p>
+                  <div class="mspop_cnt_item">
+                    <div class="mspop_cnt_item_icon">
+                      <img
+                        src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299269ccb9fc2ec39c70ca_plan_icon1.png"
+                        alt="icon"
+                      />
+                    </div>
+                    <p class="rwfaname">Select Airport</p>
+                    <p class="rwfaid"></p>
+                  </div>
+                </div>
+                <div class="mspop_cnt_box">
+                  <p>
+                    To
+                    <img
+                      src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299269992d97759a2c5742_dblarrow.png"
+                      alt=""
+                    />
+                  </p>
+                  <div class="mspop_cnt_item">
+                    <div class="mspop_cnt_item_icon">
+                      <img
+                        src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/692992693227baee55527900_plan_icon2.png"
+                        alt="icon"
+                      />
+                    </div>
+                    <p class="rwtaname">Select Airport</p>
+                    <p class="rwtaid"></p>
+                  </div>
+                </div>
+                <div class="mspop_cnt_box">
+                  <p>Date</p>
+                  <div class="mspop_cnt_item">
+                    <div class="mspop_cnt_item_icon">
+                      <img
+                        src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299366e47ff54456ae3b44_datems.png"
+                        alt="icon"
+                      />
+                    </div>
+                    <p class="rwdateformated">Select Date</p>
+                    <p class="rwdateastext"></p>
+                    <p class="rwreturndate"></p>
+                  </div>
+                </div>
+                <div class="mspop_cnt_box">
+                  <p>pax</p>
+                  <div class="mspop_cnt_item">
+                    <div class="mspop_cnt_item_icon">
+                      <img
+                        src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/6929936640fd29b7b68bea70_paxms.png"
+                        alt="icon"
+                      />
+                    </div>
+                    <p class="rwpax">Passanger</p>
+                  </div>
+                </div>
+              </div>
+              <div class="search_flight">
+                <button class="round_search_btn" type="button">Search</button>
+              </div>
+            </div>
+            <div class="ms_tab_cnt_item" id="mstabmulticity">
+              <div class="mstab_cntbox multicity_box">
+                <div class="multicity_predefine">
+                  <div class="mspop_cnt_box">
+                    <p>From</p>
+                    <div class="mspop_cnt_item">
+                      <div class="mspop_cnt_item_icon">
+                        <img
+                          src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299269ccb9fc2ec39c70ca_plan_icon1.png"
+                          alt="icon"
+                        />
+                      </div>
+                      <p class="owfaname">Select Airport</p>
+                      <p class="owfaid"></p>
+                    </div>
+                  </div>
+                  <div class="mspop_cnt_box">
+                    <p>
+                      To
+                      <img
+                        src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299269992d97759a2c5742_dblarrow.png"
+                        alt=""
+                      />
+                    </p>
+                    <div class="mspop_cnt_item">
+                      <div class="mspop_cnt_item_icon">
+                        <img
+                          src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/692992693227baee55527900_plan_icon2.png"
+                          alt="icon"
+                        />
+                      </div>
+                      <p class="owtaname">Select Airport</p>
+                      <p class="owtaid"></p>
+                    </div>
+                  </div>
+                  <div class="mspop_cnt_box">
+                    <p>Date</p>
+                    <div class="mspop_cnt_item">
+                      <div class="mspop_cnt_item_icon">
+                        <img
+                          src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299366e47ff54456ae3b44_datems.png"
+                          alt="icon"
+                        />
+                      </div>
+                      <p class="owdateformated">Select Date</p>
+                      <p class="owdateastext"></p>
+                    </div>
+                  </div>
+                  <div class="mspop_cnt_box">
+                    <p>pax</p>
+                    <div class="mspop_cnt_item">
+                      <div class="mspop_cnt_item_icon">
+                        <img
+                          src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/6929936640fd29b7b68bea70_paxms.png"
+                          alt="icon"
+                        />
+                      </div>
+                      <p class="owpax">Passanger</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="search_flight">
+                <button class="addnew">
+                  <img
+                    src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/692c1f7902828a7c8eb67bab_plus_icon.png"
+                    alt=""
+                  />
+                  Add another
+                </button>
+                <button class="multicity_search_btn" type="button">
+                  Search
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- from popup -->
+    <div class="from_popup">
+      <div class="container">
+        <div class="from_popup_wrapper algolio_wrapper">
+          <div class="ms_popup_header from_popup_header">
+            <div class="msp_header_icon">
+              <img
+                src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/6929904e2a85631be7392ee2_ms_cross.png"
+                alt="cross_icon"
+              />
+            </div>
+            <h3>From <span>WHERE?</span></h3>
+          </div>
+          <div class="from_popup_cnt">
+            <div class="from_popup_cnt_input">
+              <input type="text" placeholder="From" />
+            </div>
+            <div class="from_airport_result"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

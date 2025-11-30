@@ -1,0 +1,23 @@
+{
+  "way": "round trip",
+  "formIdInput": "USAK Usak  (TURKEY) LTBO / USQ / ",
+  "toIdInput": "SEDONA Sedona Arizona (USA) KSEZ / SDX / SEZ",
+  "fromInputReturn": "SEDONA Sedona Arizona (USA) KSEZ / SDX / SEZ",
+  "toInputReturn": "USAK Usak  (TURKEY) LTBO / USQ / ",
+  "fromId": "1498590229233x449956897646188740",
+  "toId": "1498583128494x735078010475263000",
+  "returnFromId": "1498583128494x735078010475263000",
+  "returnToId": "1498590229233x449956897646188740",
+  "dateAsText": "2025-11-29",
+  "returnDateAsText": "2025-12-06",
+  "timeAsText": "00:00:00",
+  "timeAsTextReturn": "00:00:00",
+  "pax": "2",
+  "paxReturn": "2",
+  "appDate": "2025-11-29",
+  "appDateReturn": "2025-12-06",
+  "timeStamp": 1764352800000,
+  "timeStampReturn": 1764957600000,
+  "fromShortName": "Usak",
+  "toShortName": "Sedona"
+}
