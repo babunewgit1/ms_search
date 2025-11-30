@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
     <link rel="stylesheet" href="popup.css" />
+    <script src="https://cdn.jsdelivr.net/npm/algoliasearch@4.14.3/dist/algoliasearch.umd.js"></script>
   </head>
   <body>
     <div class="ms_popup_box">
@@ -33,7 +34,7 @@
           <div class="ms_tab_cnt_wrapper">
             <div class="ms_tab_cnt_item active" id="mstaboneway">
               <div class="mstab_cntbox">
-                <div class="mspop_cnt_box">
+                <div class="mspop_cnt_box frompopup">
                   <p>From</p>
                   <div class="mspop_cnt_item">
                     <div class="mspop_cnt_item_icon">
@@ -42,11 +43,12 @@
                         alt="icon"
                       />
                     </div>
-                    <p class="owfaname">Select Airport</p>
-                    <p class="owfaid"></p>
+                    <p class="owfaname fromairportname">Select Airport</p>
+                    <p class="owfaid fromairportid"></p>
+                    <p class="owfashort fromairportshortcode"></p>
                   </div>
                 </div>
-                <div class="mspop_cnt_box">
+                <div class="mspop_cnt_box topopup">
                   <p>
                     To
                     <img
@@ -61,8 +63,9 @@
                         alt="icon"
                       />
                     </div>
-                    <p class="owtaname">Select Airport</p>
-                    <p class="owtaid"></p>
+                    <p class="owtaname toairportname">Select Airport</p>
+                    <p class="owtaid toairportid"></p>
+                    <p class="owtashort ftoirportshortcode"></p>
                   </div>
                 </div>
                 <div class="mspop_cnt_box">
@@ -97,7 +100,7 @@
             </div>
             <div class="ms_tab_cnt_item" id="mstabroundtrip">
               <div class="mstab_cntbox">
-                <div class="mspop_cnt_box">
+                <div class="mspop_cnt_box frompopup">
                   <p>From</p>
                   <div class="mspop_cnt_item">
                     <div class="mspop_cnt_item_icon">
@@ -106,11 +109,12 @@
                         alt="icon"
                       />
                     </div>
-                    <p class="rwfaname">Select Airport</p>
-                    <p class="rwfaid"></p>
+                    <p class="rwfaname fromairportname">Select Airport</p>
+                    <p class="rwfaid fromairportid"></p>
+                    <p class="rwfashort fromairportshortcode"></p>
                   </div>
                 </div>
-                <div class="mspop_cnt_box">
+                <div class="mspop_cnt_box topopup">
                   <p>
                     To
                     <img
@@ -125,8 +129,9 @@
                         alt="icon"
                       />
                     </div>
-                    <p class="rwtaname">Select Airport</p>
-                    <p class="rwtaid"></p>
+                    <p class="rwtaname toairportname">Select Airport</p>
+                    <p class="rwtaid toairportid"></p>
+                    <p class="rwtashort ftoirportshortcode"></p>
                   </div>
                 </div>
                 <div class="mspop_cnt_box">
@@ -163,7 +168,7 @@
             <div class="ms_tab_cnt_item" id="mstabmulticity">
               <div class="mstab_cntbox multicity_box">
                 <div class="multicity_predefine">
-                  <div class="mspop_cnt_box">
+                  <div class="mspop_cnt_box frompopup">
                     <p>From</p>
                     <div class="mspop_cnt_item">
                       <div class="mspop_cnt_item_icon">
@@ -172,11 +177,12 @@
                           alt="icon"
                         />
                       </div>
-                      <p class="owfaname">Select Airport</p>
-                      <p class="owfaid"></p>
+                      <p class="mcfaname fromairportname">Select Airport</p>
+                      <p class="mcfaid fromairportid"></p>
+                      <p class="mcfashort fromairportshortcode"></p>
                     </div>
                   </div>
-                  <div class="mspop_cnt_box">
+                  <div class="mspop_cnt_box topopup">
                     <p>
                       To
                       <img
@@ -191,8 +197,9 @@
                           alt="icon"
                         />
                       </div>
-                      <p class="owtaname">Select Airport</p>
-                      <p class="owtaid"></p>
+                      <p class="mctaname toairportname">Select Airport</p>
+                      <p class="mctaid toairportid"></p>
+                      <p class="mctashort ftoirportshortcode"></p>
                     </div>
                   </div>
                   <div class="mspop_cnt_box">
@@ -243,7 +250,7 @@
     <!-- from popup -->
     <div class="from_popup">
       <div class="container">
-        <div class="from_popup_wrapper algolio_wrapper">
+        <div class="from_popup_wrapper">
           <div class="ms_popup_header from_popup_header">
             <div class="msp_header_icon">
               <img
@@ -251,17 +258,44 @@
                 alt="cross_icon"
               />
             </div>
-            <h3>From <span>WHERE?</span></h3>
+            <h3><span class="popup_mode_text">From</span> <span>WHERE?</span></h3>
           </div>
-          <div class="from_popup_cnt">
-            <div class="from_popup_cnt_input">
-              <input type="text" placeholder="From" />
+          <div class="from_pop_inp_cnt">
+            <div class="from_input_box">
+              <div class="from_popup_cnt algolio_wrapper">
+                <div class="from_popup_cnt_input eminputblock">
+                  <input type="text" class="algolio_input" placeholder="From" />
+                </div>
+              </div>
             </div>
-            <div class="from_airport_result"></div>
+            <div class="from_near_checkbox">
+              <p>Include Nearby Airports</p>
+              <div class="toggle-switcher-container">
+                <label class="toggle-switcher">
+                  <input type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="from_search_result">
+              <div class="from_search_text">
+                <img
+                  src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/692c4f7b937c5e652dcaf0c2_gps.png"
+                  alt=""
+                />
+                <p>Around me</p>
+              </div>
+              <div class="pop_search-results"></div>
+            </div>
+          </div>
+          <div class="from_signin">
+            <p>Sign in to view your recent searches</p>
+            <button type="button">SIGN IN</button>
           </div>
         </div>
       </div>
     </div>
-    <script src="popup.js"></script>
+
+    <!-- <script src="popup.js"></script> -->
   </body>
 </html>

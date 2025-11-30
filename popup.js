@@ -1,3 +1,216 @@
+// algolio search
+// Wait for DOM to be ready
+      document.addEventListener("DOMContentLoaded", function () {
+        // Algolia Search Implementation
+        const searchClient = algoliasearch(
+          "ZSPO7HB4MN",
+          "2a3621a18dca4f1fb757e9ddaea72440"
+        );
+        const index = searchClient.initIndex("Airports");
+
+        function debounce(func, delay) {
+          let timeout;
+          return function (...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), delay);
+          };
+        }
+
+        function escapeHTML(str) {
+          const div = document.createElement("div");
+          div.appendChild(document.createTextNode(str));
+          return div.innerHTML;
+        }
+
+        const handleInput = debounce(function (event) {
+          const input = event.target;
+          if (!input.classList.contains("algolio_input")) return;
+          const query = input.value.trim();
+          const algolioWrapper = input.closest(".algolio_wrapper");
+          const resultsContainer = document.querySelector(
+            ".pop_search-results"
+          );
+          if (!resultsContainer) return;
+
+          if (query.length === 0) {
+            resultsContainer.innerHTML = "";
+            return;
+          }
+
+          // Perform Algolia search
+          index
+            .search(query)
+            .then(({ hits }) => {
+              if (hits.length > 0) {
+                resultsContainer.innerHTML = hits
+                  .map(
+                    (hit) =>
+                      `<div class="port" tabindex="0">
+                  <div class="from_pop_result_block">
+                    <div class="form_pop_left">
+                     <img
+                      src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299269ccb9fc2ec39c70ca_plan_icon1.png"
+                      alt="Location Icon"
+                    />
+                    <p class="emfieldname">${escapeHTML(hit["All Fields"])} (${
+                        hit["ICAO Code"]
+                          ? escapeHTML(hit["ICAO Code"])
+                          : hit["IATA Code"]
+                          ? escapeHTML(hit["IATA Code"])
+                          : hit["FAA Code"]
+                          ? escapeHTML(hit["FAA Code"])
+                          : ""
+                      })</p>
+                    </div>
+                    <div class="form_pop_right">
+                      <p class="uniqueid">${escapeHTML(hit["unique id"])}</p>
+                        <p class="shortcode">${
+                           hit["ICAO Code"]
+                              ? escapeHTML(hit["ICAO Code"])
+                              : hit["IATA Code"]
+                              ? escapeHTML(hit["IATA Code"])
+                              : hit["FAA Code"]
+                              ? escapeHTML(hit["FAA Code"])
+                              : ""
+                        }</p>
+                    </div>
+                  </div>
+                </div>`
+                  )
+                  .join("");
+              } else {
+                resultsContainer.innerHTML = "<p>No results found.</p>";
+              }
+            })
+            .catch((err) => {
+              console.error("Algolia search error:", err);
+              resultsContainer.innerHTML = "<p>Error fetching results.</p>";
+            });
+        }, 300);
+
+        // Function to handle click events on search results
+        function handleClick(event) {
+          const portElement = event.target.closest(".port");
+          if (portElement) {
+            const emfieldname =
+              portElement.querySelector(".emfieldname").textContent;
+            const uniqueid = portElement.querySelector(".uniqueid").textContent;
+            const shortcode =
+              portElement.querySelector(".shortcode").textContent;
+
+            // Fill data based on mode (from or to)
+            if (window.currentClickedPopup && window.currentPopupMode) {
+              if (window.currentPopupMode === "from") {
+                const nameElement = window.currentClickedPopup.querySelector(".fromairportname");
+                const idElement = window.currentClickedPopup.querySelector(".fromairportid");
+                const shortcodeElement = window.currentClickedPopup.querySelector(".fromairportshortcode");
+
+                if (nameElement) nameElement.textContent = emfieldname;
+                if (idElement) idElement.textContent = uniqueid;
+                if (shortcodeElement) shortcodeElement.textContent = shortcode;
+              } else if (window.currentPopupMode === "to") {
+                const nameElement = window.currentClickedPopup.querySelector(".toairportname");
+                const idElement = window.currentClickedPopup.querySelector(".toairportid");
+                const shortcodeElement = window.currentClickedPopup.querySelector(".toairportshortcode");
+
+                if (nameElement) nameElement.textContent = emfieldname;
+                if (idElement) idElement.textContent = uniqueid;
+                if (shortcodeElement) shortcodeElement.textContent = shortcode;
+              }
+            }
+
+            // Reset input value, clear results, and hide modal
+            const allAlgolioInputs = document.querySelectorAll(".from_popup .algolio_input");
+            const resultsContainer = document.querySelector(".pop_search-results");
+            
+            allAlgolioInputs.forEach(input => input.value = "");
+            if (resultsContainer) resultsContainer.innerHTML = "";
+            
+            document.querySelector(".from_popup").style.display = "none";
+          }
+        }
+
+        // Function to attach event listeners to a given .algolio_wrapper
+        function attachListeners(algolioWrapper) {
+          algolioWrapper.addEventListener("input", handleInput);
+          algolioWrapper.addEventListener("focusout", function (event) {
+            setTimeout(() => {
+              const relatedTarget = event.relatedTarget;
+
+              if (!relatedTarget || !algolioWrapper.contains(relatedTarget)) {
+                const allResults =
+                  algolioWrapper.querySelectorAll(".search-results");
+                allResults.forEach((resultsContainer) => {
+                  resultsContainer.innerHTML = "";
+                });
+              }
+            }, 100);
+          });
+        }
+
+        // Select all existing .algolio_wrapper elements and attach listeners
+        const algolioWrappers = document.querySelectorAll(".algolio_wrapper");
+        algolioWrappers.forEach(attachListeners);
+
+        // Add click listener to the search results container (outside algolio_wrapper)
+        document.addEventListener("click", handleClick);
+
+        // Hide search results when clicking outside
+        document.addEventListener("click", function (event) {
+          const resultsContainer = document.querySelector(
+            ".pop_search-results"
+          );
+          const algolioInput = document.querySelector(".algolio_input");
+
+          // Check if click is outside both input and results
+          if (resultsContainer && algolioInput) {
+            const isClickInside =
+              resultsContainer.contains(event.target) ||
+              algolioInput.contains(event.target) ||
+              event.target.classList.contains("algolio_input");
+
+            if (!isClickInside) {
+              resultsContainer.innerHTML = "";
+            }
+          }
+        });
+
+        // Show from_popup when clicking on .frompopup
+        document.querySelectorAll(".frompopup").forEach((popup) => {
+          popup.addEventListener("click", function () {
+            window.currentClickedPopup = this;
+            window.currentPopupMode = "from"; // Track mode
+            document.querySelector(".popup_mode_text").textContent = "From";
+            document.querySelector(".from_popup").style.display = "block";
+            // Clear the search input
+            const algolioInput = document.querySelector(".from_popup .algolio_input");
+            if (algolioInput) algolioInput.value = "";
+          });
+        });
+
+        // Show from_popup when clicking on .topopup (reuse same modal)
+        document.querySelectorAll(".topopup").forEach((popup) => {
+          popup.addEventListener("click", function () {
+            window.currentClickedPopup = this;
+            window.currentPopupMode = "to"; // Track mode
+            document.querySelector(".popup_mode_text").textContent = "To";
+            document.querySelector(".from_popup").style.display = "block";
+            // Clear the search input
+            const algolioInput = document.querySelector(".from_popup .algolio_input");
+            if (algolioInput) algolioInput.value = "";
+          });
+        });
+
+        // Close from_popup when clicking on close icon
+        document
+          .querySelector(".from_popup_header .msp_header_icon")
+          .addEventListener("click", function () {
+            document.querySelector(".from_popup").style.display = "none";
+          });
+      }); // End DOMContentLoaded
+
+
 // popup display code
 const popupTigger = document.querySelector(".search_mobile_wrapper");
 const popBoxOne = document.querySelector(".search_mobile_popup");
@@ -361,152 +574,6 @@ document.addEventListener("click", (e) => {
       }
     });
   }
-});
-
-// Algolia Search Implementation
-const searchClient = algoliasearch(
-  "ZSPO7HB4MN",
-  "2a3621a18dca4f1fb757e9ddaea72440"
-);
-const index = searchClient.initIndex("Airports");
-
-function debounce(func, delay) {
-  let timeout;
-  return function (...args) {
-    const context = this;
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(context, args), delay);
-  };
-}
-
-function escapeHTML(str) {
-  const div = document.createElement("div");
-  div.appendChild(document.createTextNode(str));
-  return div.innerHTML;
-}
-
-const handleInput = debounce(function (event) {
-  const input = event.target;
-  if (!input.classList.contains("algolio_input")) return;
-  const query = input.value.trim();
-  const eminputBlock = input.closest(".eminputblock");
-  const resultsContainer = eminputBlock.querySelector(".search-results");
-  if (!resultsContainer) {
-    console.warn("No .search-results container found for the input.");
-    return;
-  }
-
-  if (query.length === 0) {
-    resultsContainer.innerHTML = "";
-    resultsContainer.style.display = "none";
-    return;
-  }
-
-  // Perform Algolia search
-  index
-    .search(query)
-    .then(({ hits }) => {
-      if (hits.length > 0) {
-        resultsContainer.innerHTML = hits
-          .map(
-            (hit) =>
-              `<div class="port" tabindex="0">
-            <div class="emfieldnamewrapper">
-              <img
-                src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/6739f54808efbe5ead7a23c1_Screenshot_1-removebg-preview.avif"
-                alt="Location Icon"
-              />
-              <p class="emfieldname">${escapeHTML(hit["All Fields"])}</p>
-              <p class="uniqueid">${escapeHTML(hit["unique id"])}</p>
-              <p class="shortcode">${
-                hit["ICAO Code"]
-                  ? escapeHTML(hit["ICAO Code"])
-                  : hit["IATA Code"]
-                  ? escapeHTML(hit["IATA Code"])
-                  : hit["FAA Code"]
-                  ? escapeHTML(hit["FAA Code"])
-                  : ""
-              }</p>
-              <p class="cityname">${escapeHTML(hit["AirportCity"])}</p>
-            </div>
-          </div>`
-          )
-          .join("");
-        resultsContainer.style.display = "block";
-      } else {
-        resultsContainer.innerHTML = "<p>No results found.</p>";
-        resultsContainer.style.display = "block";
-      }
-    })
-    .catch((err) => {
-      console.error("Algolia search error:", err);
-      resultsContainer.innerHTML = "<p>Error fetching results.</p>";
-      resultsContainer.style.display = "block";
-    });
-}, 300);
-
-// Function to handle click events on search results
-function handleClick(event) {
-  const portElement = event.target.closest(".port");
-  if (portElement) {
-    const emfieldname = portElement.querySelector(".emfieldname").textContent;
-    const uniqueid = portElement.querySelector(".uniqueid").textContent;
-    const shortcode = portElement.querySelector(".shortcode").textContent;
-    const citycode = portElement.querySelector(".cityname").textContent;
-
-    // Find the corresponding input and .portid
-    const eminputBlock = portElement.closest(".eminputblock");
-    const input = eminputBlock.querySelector(".algolio_input");
-    const portidElement = eminputBlock.querySelector(".portid");
-    const shortElement = eminputBlock.querySelector(".airportshort");
-    const airportCityName = eminputBlock.querySelector(".airportcity");
-    input.value = emfieldname;
-    portidElement.textContent = uniqueid;
-    shortElement.textContent = shortcode;
-    airportCityName.textContent = citycode;
-    const resultsContainer = eminputBlock.querySelector(".search-results");
-    resultsContainer.innerHTML = "";
-    resultsContainer.style.display = "none";
-  }
-}
-
-// Function to attach event listeners to a given .algolio_wrapper
-function attachListeners(algolioWrapper) {
-  algolioWrapper.addEventListener("input", handleInput);
-  algolioWrapper.addEventListener("click", handleClick);
-
-  algolioWrapper.addEventListener("focusout", function (event) {
-    setTimeout(() => {
-      const relatedTarget = event.relatedTarget;
-
-      if (!relatedTarget || !algolioWrapper.contains(relatedTarget)) {
-        const allResults = algolioWrapper.querySelectorAll(".search-results");
-        allResults.forEach((resultsContainer) => {
-          resultsContainer.innerHTML = "";
-          resultsContainer.style.display = "none";
-        });
-      }
-    }, 100);
-  });
-}
-
-// Select all existing .algolio_wrapper elements and attach listeners
-const algolioWrappers = document.querySelectorAll(".algolio_wrapper");
-algolioWrappers.forEach(attachListeners);
-
-// Hide search results when clicking outside any .algolio_wrapper
-document.addEventListener("click", function (event) {
-  algolioWrappers.forEach((algolioWrapper) => {
-    const isClickInside = algolioWrapper.contains(event.target);
-
-    if (!isClickInside) {
-      const allResults = algolioWrapper.querySelectorAll(".search-results");
-      allResults.forEach((resultsContainer) => {
-        resultsContainer.innerHTML = "";
-        resultsContainer.style.display = "none";
-      });
-    }
-  });
 });
 
 
