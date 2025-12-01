@@ -2,6 +2,10 @@ const flightData = JSON.parse(sessionStorage.getItem("storeData") || "{}");
 
 // Helper function to format date
 function formatDate(dateString) {
+  // Check if dateString is undefined or null
+  if (!dateString) {
+    return "Select Date";
+  }
   // Parse the date string directly without timezone conversion
   const [year, month, day] = dateString.split("-");
   const date = new Date(year, month - 1, day);

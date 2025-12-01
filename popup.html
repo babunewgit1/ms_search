@@ -65,7 +65,7 @@
                     </div>
                     <p class="owtaname toairportname">Select Airport</p>
                     <p class="owtaid toairportid"></p>
-                    <p class="owtashort ftoirportshortcode"></p>
+                    <p class="owtashort toairportshortcode"></p>
                   </div>
                 </div>
                 <div class="mspop_cnt_box">
@@ -131,7 +131,7 @@
                     </div>
                     <p class="rwtaname toairportname">Select Airport</p>
                     <p class="rwtaid toairportid"></p>
-                    <p class="rwtashort ftoirportshortcode"></p>
+                    <p class="rwtashort toairportshortcode"></p>
                   </div>
                 </div>
                 <div class="mspop_cnt_box">
@@ -199,7 +199,7 @@
                       </div>
                       <p class="mctaname toairportname">Select Airport</p>
                       <p class="mctaid toairportid"></p>
-                      <p class="mctashort ftoirportshortcode"></p>
+                      <p class="mctashort toairportshortcode"></p>
                     </div>
                   </div>
                   <div class="mspop_cnt_box">
@@ -258,13 +258,17 @@
                 alt="cross_icon"
               />
             </div>
-            <h3><span class="popup_mode_text">From</span> <span>WHERE?</span></h3>
+            <h3>From <span>WHERE?</span></h3>
           </div>
           <div class="from_pop_inp_cnt">
             <div class="from_input_box">
               <div class="from_popup_cnt algolio_wrapper">
                 <div class="from_popup_cnt_input eminputblock">
-                  <input type="text" class="algolio_input" placeholder="From" />
+                  <input
+                    type="text"
+                    class="algolio_input_from"
+                    placeholder="From"
+                  />
                 </div>
               </div>
             </div>
@@ -285,10 +289,63 @@
                 />
                 <p>Around me</p>
               </div>
-              <div class="pop_search-results"></div>
+              <div class="pop_search-results_from"></div>
             </div>
           </div>
           <div class="from_signin">
+            <p>Sign in to view your recent searches</p>
+            <button type="button">SIGN IN</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- to popup -->
+    <div class="to_popup">
+      <div class="container">
+        <div class="to_popup_wrapper">
+          <div class="ms_popup_header to_popup_header">
+            <div class="msp_header_icon">
+              <img
+                src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/6929904e2a85631be7392ee2_ms_cross.png"
+                alt="cross_icon"
+              />
+            </div>
+            <h3>To <span>WHERE?</span></h3>
+          </div>
+          <div class="to_pop_inp_cnt">
+            <div class="to_input_box">
+              <div class="to_popup_cnt algolio_wrapper">
+                <div class="to_popup_cnt_input eminputblock">
+                  <input
+                    type="text"
+                    class="algolio_input_to"
+                    placeholder="To"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="to_near_checkbox">
+              <p>Include Nearby Airports</p>
+              <div class="toggle-switcher-container">
+                <label class="toggle-switcher">
+                  <input type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="to_search_result">
+              <div class="to_search_text">
+                <img
+                  src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/692c4f7b937c5e652dcaf0c2_gps.png"
+                  alt=""
+                />
+                <p>Around me</p>
+              </div>
+              <div class="pop_search-results_to"></div>
+            </div>
+          </div>
+          <div class="to_signin">
             <p>Sign in to view your recent searches</p>
             <button type="button">SIGN IN</button>
           </div>

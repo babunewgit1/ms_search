@@ -233,7 +233,8 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.from_popup {
+.from_popup,
+.to_popup {
   background-color: #f3f3f3;
   position: fixed;
   width: 100%;
@@ -245,14 +246,16 @@
   padding-top: 25px;
 }
 
-.from_pop_inp_cnt {
+.from_pop_inp_cnt,
+.to_pop_inp_cnt {
   background-color: #fff;
   border-radius: 8px;
   padding: 16px;
   margin-top: 16px;
 }
 
-.from_popup_cnt_input input {
+.from_popup_cnt_input input,
+.to_popup_cnt_input input {
   display: block !important;
   width: 100% !important;
   height: 48px !important;
@@ -266,7 +269,8 @@
   background-position: top 15px right 10px !important;
 }
 
-.from_pop_inp_cnt .search-results {
+.from_pop_inp_cnt .search-results,
+.to_pop_inp_cnt .search-results {
   position: static !important;
 }
 
@@ -413,4 +417,24 @@
   font-weight: bold;
   color: #fff;
   padding: 13px 10px 12px 10px;
+}
+
+/* Hide airport ID and shortcode fields - they are only for data storage */
+.owfaid,
+.owfashort,
+.owtaid,
+.owtashort,
+.rwfaid,
+.rwfashort,
+.rwtaid,
+.rwtashort,
+.mcfaid,
+.mcfashort,
+.mctaid,
+.mctashort,
+.fromairportid,
+.fromairportshortcode,
+.toairportid,
+.toairportshortcode {
+  display: none !important;
 }

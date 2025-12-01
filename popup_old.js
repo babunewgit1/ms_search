@@ -25,18 +25,12 @@
 
         const handleInput = debounce(function (event) {
           const input = event.target;
-          if (!input.classList.contains("algolio_input_from") && !input.classList.contains("algolio_input_to")) return;
+          if (!input.classList.contains("algolio_input")) return;
           const query = input.value.trim();
           const algolioWrapper = input.closest(".algolio_wrapper");
-          
-          // Determine which results container to use
-          let resultsContainer;
-          if (input.classList.contains("algolio_input_from")) {
-            resultsContainer = document.querySelector(".pop_search-results_from");
-          } else if (input.classList.contains("algolio_input_to")) {
-            resultsContainer = document.querySelector(".pop_search-results_to");
-          }
-          
+          const resultsContainer = document.querySelector(
+            ".pop_search-results"
+          );
           if (!resultsContainer) return;
 
           if (query.length === 0) {
@@ -105,34 +99,35 @@
             const shortcode =
               portElement.querySelector(".shortcode").textContent;
 
-            // Fill data based on which modal is open
-            if (window.currentClickedPopup) {
-              const nameElement = window.currentClickedPopup.querySelector(".fromairportname, .toairportname");
-              const idElement = window.currentClickedPopup.querySelector(".fromairportid, .toairportid");
-              const shortcodeElement = window.currentClickedPopup.querySelector(".fromairportshortcode, .toairportshortcode");
+            // Fill data based on mode (from or to)
+            if (window.currentClickedPopup && window.currentPopupMode) {
+              if (window.currentPopupMode === "from") {
+                const nameElement = window.currentClickedPopup.querySelector(".fromairportname");
+                const idElement = window.currentClickedPopup.querySelector(".fromairportid");
+                const shortcodeElement = window.currentClickedPopup.querySelector(".fromairportshortcode");
 
-              if (nameElement) nameElement.textContent = emfieldname;
-              if (idElement) idElement.textContent = uniqueid;
-              if (shortcodeElement) shortcodeElement.textContent = shortcode;
+                if (nameElement) nameElement.textContent = emfieldname;
+                if (idElement) idElement.textContent = uniqueid;
+                if (shortcodeElement) shortcodeElement.textContent = shortcode;
+              } else if (window.currentPopupMode === "to") {
+                const nameElement = window.currentClickedPopup.querySelector(".toairportname");
+                const idElement = window.currentClickedPopup.querySelector(".toairportid");
+                const shortcodeElement = window.currentClickedPopup.querySelector(".toairportshortcode");
+
+                if (nameElement) nameElement.textContent = emfieldname;
+                if (idElement) idElement.textContent = uniqueid;
+                if (shortcodeElement) shortcodeElement.textContent = shortcode;
+              }
             }
 
-            // Reset input value, clear results, and hide the appropriate modal
-            const fromPopup = document.querySelector(".from_popup");
-            const toPopup = document.querySelector(".to_popup");
+            // Reset input value, clear results, and hide modal
+            const allAlgolioInputs = document.querySelectorAll(".from_popup .algolio_input");
+            const resultsContainer = document.querySelector(".pop_search-results");
             
-            if (fromPopup && fromPopup.style.display === "block") {
-              const fromInput = document.querySelector(".algolio_input_from");
-              const fromResults = document.querySelector(".pop_search-results_from");
-              if (fromInput) fromInput.value = "";
-              if (fromResults) fromResults.innerHTML = "";
-              fromPopup.style.display = "none";
-            } else if (toPopup && toPopup.style.display === "block") {
-              const toInput = document.querySelector(".algolio_input_to");
-              const toResults = document.querySelector(".pop_search-results_to");
-              if (toInput) toInput.value = "";
-              if (toResults) toResults.innerHTML = "";
-              toPopup.style.display = "none";
-            }
+            allAlgolioInputs.forEach(input => input.value = "");
+            if (resultsContainer) resultsContainer.innerHTML = "";
+            
+            document.querySelector(".from_popup").style.display = "none";
           }
         }
 
@@ -181,42 +176,37 @@
           }
         });
 
-        // Show from_popup when clicking on .frompopup (using event delegation)
-        document.addEventListener("click", function(e) {
-          const frompopup = e.target.closest(".frompopup");
-          if (frompopup) {
-            window.currentClickedPopup = frompopup;
+        // Show from_popup when clicking on .frompopup
+        document.querySelectorAll(".frompopup").forEach((popup) => {
+          popup.addEventListener("click", function () {
+            window.currentClickedPopup = this;
+            window.currentPopupMode = "from"; // Track mode
+            document.querySelector(".popup_mode_text").textContent = "From";
             document.querySelector(".from_popup").style.display = "block";
             // Clear the search input
-            const algolioInput = document.querySelector(".algolio_input_from");
+            const algolioInput = document.querySelector(".from_popup .algolio_input");
             if (algolioInput) algolioInput.value = "";
-          }
+          });
         });
 
-        // Show to_popup when clicking on .topopup (using event delegation)
-        document.addEventListener("click", function(e) {
-          const topopup = e.target.closest(".topopup");
-          if (topopup) {
-            window.currentClickedPopup = topopup;
-            document.querySelector(".to_popup").style.display = "block";
+        // Show from_popup when clicking on .topopup (reuse same modal)
+        document.querySelectorAll(".topopup").forEach((popup) => {
+          popup.addEventListener("click", function () {
+            window.currentClickedPopup = this;
+            window.currentPopupMode = "to"; // Track mode
+            document.querySelector(".popup_mode_text").textContent = "To";
+            document.querySelector(".from_popup").style.display = "block";
             // Clear the search input
-            const algolioInput = document.querySelector(".algolio_input_to");
+            const algolioInput = document.querySelector(".from_popup .algolio_input");
             if (algolioInput) algolioInput.value = "";
-          }
+          });
         });
 
-        // Hide from_popup when clicking the close icon
+        // Close from_popup when clicking on close icon
         document
           .querySelector(".from_popup_header .msp_header_icon")
           .addEventListener("click", function () {
             document.querySelector(".from_popup").style.display = "none";
-          });
-
-        // Hide to_popup when clicking the close icon
-        document
-          .querySelector(".to_popup_header .msp_header_icon")
-          .addEventListener("click", function () {
-            document.querySelector(".to_popup").style.display = "none";
           });
       }); // End DOMContentLoaded
 
@@ -244,7 +234,7 @@ crossPopup.addEventListener("click", function(){
 
   tabItems.forEach(tab => {
     tab.addEventListener("click", () => {
-      const targetId = tab.getAttribute("data-item");
+      const targetId = tab.getAttribute("data-item"); // example: mstaboneway
 
       // Remove active from all tabs
       tabItems.forEach(item => item.classList.remove("active"));
@@ -389,7 +379,7 @@ if (getstoredDataSM.way === "multi-city") {
             />
             <p>Flight ${i + 1}</p>
          </div>
-         <div class="mspop_cnt_box frompopup">
+         <div class="mspop_cnt_box">
             <p>From</p>
             <div class="mspop_cnt_item">
                <div class="mspop_cnt_item_icon">
@@ -398,12 +388,11 @@ if (getstoredDataSM.way === "multi-city") {
                   alt="icon"
                   />
                </div>
-               <p class="mcfaname fromairportname">${getstoredDataSM.formIdInput[i]} <span>(${getstoredDataSM.fromShortName[i]})</span></p>
-               <p class="mcfaid fromairportid">${getstoredDataSM.fromId[i]}</p>
-               <p class="mcfashort fromairportshortcode">${getstoredDataSM.fromShortName[i]}</p>
+               <p class="mcfaname">${getstoredDataSM.formIdInput[i]} <span>(${getstoredDataSM.fromShortName[i]})</span></p>
+               <p class="mcfaid">${getstoredDataSM.fromId[i]}</p>
             </div>
          </div>
-         <div class="mspop_cnt_box topopup">
+         <div class="mspop_cnt_box">
             <p>To <img src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299269992d97759a2c5742_dblarrow.png" alt="" /></p>
             <div class="mspop_cnt_item">
                <div class="mspop_cnt_item_icon">
@@ -412,9 +401,8 @@ if (getstoredDataSM.way === "multi-city") {
                   alt="icon"
                   />
                </div>
-               <p class="mctaname toairportname">${getstoredDataSM.toIdInput[i]} <span>(${getstoredDataSM.toShortName[i]})</span></p>
-               <p class="mctaid toairportid">${getstoredDataSM.toId[i]}</p>
-               <p class="mctashort toairportshortcode">${getstoredDataSM.toShortName[i]}</p>
+               <p class="mctaname">${getstoredDataSM.toIdInput[i]} <span>(${getstoredDataSM.toShortName[i]})</span></p>
+               <p class="mctaid">${getstoredDataSM.toId[i]}</p>
             </div>
          </div>
          <div class="mspop_cnt_box">
@@ -470,29 +458,13 @@ if (addNewBtn) {
   addNewBtn.addEventListener("click", () => {
     const multicityBox = document.querySelector(".multicity_box");
     const currentFlights = multicityBox.querySelectorAll(".multicity_wrapping");
-    const predefineBlock = document.querySelector(".multicity_predefine");
-    const isPredefineVisible = predefineBlock && predefineBlock.style.display !== "none";
     
     if (currentFlights.length >= 10) {
       alert("You can not add more flights");
       return;
     }
     
-    // Calculate next flight number based on existing flights
-    let nextFlightNumber;
-    if (currentFlights.length > 0) {
-      // Find the highest flight number from existing flights
-      const flightNumbers = Array.from(currentFlights).map(flight => {
-        const flightText = flight.querySelector('.flight_heading p').textContent;
-        const match = flightText.match(/Flight (\d+)/);
-        return match ? parseInt(match[1]) : 0;
-      });
-      nextFlightNumber = Math.max(...flightNumbers) + 1;
-    } else {
-      // If no .multicity_wrapping exists, check if predefined Flight 1 is visible
-      // If visible, next is Flight 2; if hidden (cleared), start from Flight 1
-      nextFlightNumber = isPredefineVisible ? 2 : 1;
-    }
+    const nextFlightNumber = currentFlights.length + 1;
 
     const newFlightBlock = `
       <div class="multicity_wrapping" data-from-storage="false">
@@ -504,7 +476,7 @@ if (addNewBtn) {
             />
             <p>Flight ${nextFlightNumber}</p>
          </div>
-         <div class="mspop_cnt_box frompopup">
+         <div class="mspop_cnt_box">
             <p>From</p>
             <div class="mspop_cnt_item">
                <div class="mspop_cnt_item_icon">
@@ -513,12 +485,11 @@ if (addNewBtn) {
                   alt="icon"
                   />
                </div>
-               <p class="mcfaname fromairportname">Select airport</p>
-               <p class="mcfaid fromairportid"></p>
-               <p class="mcfashort fromairportshortcode"></p>
+               <p class="mcfaname">Select airport</p>
+               <p class="mcfaid"></p>
             </div>
          </div>
-         <div class="mspop_cnt_box topopup">
+         <div class="mspop_cnt_box">
             <p>To <img src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299269992d97759a2c5742_dblarrow.png" alt="" /></p>
             <div class="mspop_cnt_item">
                <div class="mspop_cnt_item_icon">
@@ -527,9 +498,8 @@ if (addNewBtn) {
                   alt="icon"
                   />
                </div>
-               <p class="mctaname toairportname">Select airport</p>
-               <p class="mctaid toairportid"></p>
-               <p class="mctashort toairportshortcode"></p>
+               <p class="mctaname">Select airport</p>
+               <p class="mctaid"></p>
             </div>
          </div>
          <div class="mspop_cnt_box">
@@ -581,8 +551,6 @@ document.addEventListener("click", (e) => {
         storedData.toId.splice(flightIndex, 1);
         storedData.formIdInput.splice(flightIndex, 1);
         storedData.toIdInput.splice(flightIndex, 1);
-        storedData.fromShortName.splice(flightIndex, 1);
-        storedData.toShortName.splice(flightIndex, 1);
         storedData.dateAsText.splice(flightIndex, 1);
         storedData.pax.splice(flightIndex, 1);
 
