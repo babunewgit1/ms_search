@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
     <link rel="stylesheet" href="popup.css" />
+    <link rel="stylesheet" href="calender.css" />
     <script src="https://cdn.jsdelivr.net/npm/algoliasearch@4.14.3/dist/algoliasearch.umd.js"></script>
   </head>
   <body>
@@ -68,7 +69,7 @@
                     <p class="owtashort toairportshortcode"></p>
                   </div>
                 </div>
-                <div class="mspop_cnt_box">
+                <div class="mspop_cnt_box datepopup">
                   <p>Date</p>
                   <div class="mspop_cnt_item">
                     <div class="mspop_cnt_item_icon">
@@ -134,7 +135,7 @@
                     <p class="rwtashort toairportshortcode"></p>
                   </div>
                 </div>
-                <div class="mspop_cnt_box">
+                <div class="mspop_cnt_box datepopup">
                   <p>Date</p>
                   <div class="mspop_cnt_item">
                     <div class="mspop_cnt_item_icon">
@@ -202,7 +203,7 @@
                       <p class="mctashort toairportshortcode"></p>
                     </div>
                   </div>
-                  <div class="mspop_cnt_box">
+                  <div class="mspop_cnt_box datepopup">
                     <p>Date</p>
                     <div class="mspop_cnt_item">
                       <div class="mspop_cnt_item_icon">
@@ -348,6 +349,83 @@
           <div class="to_signin">
             <p>Sign in to view your recent searches</p>
             <button type="button">SIGN IN</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- date popup -->
+    <div class="date_popup">
+      <div class="container">
+        <div class="date_popup_wrapper">
+          <div class="ms_popup_header date_popup_header">
+            <div class="msp_header_icon">
+              <img
+                src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/6929904e2a85631be7392ee2_ms_cross.png"
+                alt="cross_icon"
+              />
+            </div>
+            <h3>Select <span>DATE</span></h3>
+          </div>
+          <div class="date_pop_cnt">
+            <div class="calendar-container">
+              <div class="content">
+                <div class="selected_date">
+                  <div class="date-display">
+                    <span class="label">DEPARTURE DATE</span>
+                    <div class="value">
+                      <img
+                        src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299366e47ff54456ae3b44_datems.png"
+                        alt="icon"
+                      />
+                      <span id="display-date-text">Select a date</span>
+                    </div>
+                  </div>
+                  <div
+                    class="date-display return-date-display"
+                    style="display: none"
+                  >
+                    <span class="label">RETURN DATE</span>
+                    <div class="value">
+                      <img
+                        src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299366e47ff54456ae3b44_datems.png"
+                        alt="icon"
+                      />
+                      <span id="display-return-date-text">Select a date</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="calendar-wrapper">
+                  <div class="month-nav">
+                    <button id="prev-btn">
+                      <img
+                        src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/692d9adaef1f9e37df1edcc7_left_cal.png"
+                      />
+                    </button>
+                    <h3 id="current-month-year">DECEMBER, 2025</h3>
+                    <button id="next-btn">
+                      <img
+                        src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/692d9ada74d1bf6a6b267c9f_right_cal.png"
+                      />
+                    </button>
+                  </div>
+
+                  <div class="days-header">
+                    <span>SUN</span>
+                    <span>MON</span>
+                    <span>TUE</span>
+                    <span>WED</span>
+                    <span>THU</span>
+                    <span>FRI</span>
+                    <span>SAT</span>
+                  </div>
+
+                  <ul class="days-grid"></ul>
+                </div>
+
+                <button class="save-btn">SAVE SELECTED DATE</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

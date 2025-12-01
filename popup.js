@@ -59,27 +59,13 @@
                       src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299269ccb9fc2ec39c70ca_plan_icon1.png"
                       alt="Location Icon"
                     />
-                    <p class="emfieldname">${escapeHTML(hit["All Fields"])} (${
-                        hit["ICAO Code"]
-                          ? escapeHTML(hit["ICAO Code"])
-                          : hit["IATA Code"]
-                          ? escapeHTML(hit["IATA Code"])
-                          : hit["FAA Code"]
-                          ? escapeHTML(hit["FAA Code"])
-                          : ""
-                      })</p>
+                    <p class="emfieldname">${escapeHTML(hit["All Fields"])}</p>
                     </div>
                     <div class="form_pop_right">
                       <p class="uniqueid">${escapeHTML(hit["unique id"])}</p>
-                        <p class="shortcode">${
-                           hit["ICAO Code"]
-                              ? escapeHTML(hit["ICAO Code"])
-                              : hit["IATA Code"]
-                              ? escapeHTML(hit["IATA Code"])
-                              : hit["FAA Code"]
-                              ? escapeHTML(hit["FAA Code"])
-                              : ""
-                        }</p>
+                      <p class="shortcode">${escapeHTML(
+                        hit["AirportNameShort"]
+                      )}</p>
                     </div>
                   </div>
                 </div>`
@@ -99,11 +85,17 @@
         function handleClick(event) {
           const portElement = event.target.closest(".port");
           if (portElement) {
-            const emfieldname =
-              portElement.querySelector(".emfieldname").textContent;
-            const uniqueid = portElement.querySelector(".uniqueid").textContent;
-            const shortcode =
-              portElement.querySelector(".shortcode").textContent;
+            const emfieldnameEl = portElement.querySelector(".emfieldname");
+            const uniqueidEl = portElement.querySelector(".uniqueid");
+            const shortcodeEl = portElement.querySelector(".shortcode");
+
+            // If any required element is missing, this might be a result from another script (like fix.js)
+            // So we simply return and let the other script handle it.
+            if (!emfieldnameEl || !uniqueidEl || !shortcodeEl) return;
+
+            const emfieldname = emfieldnameEl.textContent;
+            const uniqueid = uniqueidEl.textContent;
+            const shortcode = shortcodeEl.textContent;
 
             // Fill data based on which modal is open
             if (window.currentClickedPopup) {
@@ -205,6 +197,15 @@
           }
         });
 
+        // Show date_popup when clicking on .datepopup (using event delegation)
+        document.addEventListener("click", function(e) {
+          const datepopup = e.target.closest(".datepopup");
+          if (datepopup) {
+            window.currentClickedPopup = datepopup;
+            document.querySelector(".date_popup").style.display = "block";
+          }
+        });
+
         // Hide from_popup when clicking the close icon
         document
           .querySelector(".from_popup_header .msp_header_icon")
@@ -217,6 +218,13 @@
           .querySelector(".to_popup_header .msp_header_icon")
           .addEventListener("click", function () {
             document.querySelector(".to_popup").style.display = "none";
+          });
+
+        // Hide date_popup when clicking the close icon
+        document
+          .querySelector(".date_popup_header .msp_header_icon")
+          .addEventListener("click", function () {
+            document.querySelector(".date_popup").style.display = "none";
           });
       }); // End DOMContentLoaded
 
@@ -417,7 +425,7 @@ if (getstoredDataSM.way === "multi-city") {
                <p class="mctashort toairportshortcode">${getstoredDataSM.toShortName[i]}</p>
             </div>
          </div>
-         <div class="mspop_cnt_box">
+         <div class="mspop_cnt_box datepopup">
             <p>Date</p>
             <div class="mspop_cnt_item">
                <div class="mspop_cnt_item_icon">
@@ -532,7 +540,7 @@ if (addNewBtn) {
                <p class="mctashort toairportshortcode"></p>
             </div>
          </div>
-         <div class="mspop_cnt_box">
+         <div class="mspop_cnt_box datepopup">
             <p>Date</p>
             <div class="mspop_cnt_item">
                <div class="mspop_cnt_item_icon">
@@ -609,3 +617,318 @@ document.addEventListener("click", (e) => {
 });
 
 
+
+// Calendar Implementation
+document.addEventListener("DOMContentLoaded", function () {
+  const daysTag = document.querySelector(".days-grid");
+  const currentDateText = document.querySelector("#current-month-year");
+  const prevNextIcon = document.querySelectorAll(".month-nav button");
+  const displayDateText = document.getElementById("display-date-text");
+  const saveBtn = document.querySelector(".save-btn");
+
+  let date = new Date();
+  let currYear = date.getFullYear();
+  let currMonth = date.getMonth();
+  
+  // Selection state
+  let startDate = null; // { day, month, year }
+  let endDate = null;   // { day, month, year }
+  
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  // Helper to compare dates
+  const isSameDate = (d1, d2) => d1 && d2 && d1.day === d2.day && d1.month === d2.month && d1.year === d2.year;
+  const isBefore = (d1, d2) => {
+    if (d1.year !== d2.year) return d1.year < d2.year;
+    if (d1.month !== d2.month) return d1.month < d2.month;
+    return d1.day < d2.day;
+  };
+  const isAfter = (d1, d2) => isBefore(d2, d1);
+  
+  const getSelectionMode = () => {
+    // Check tab button
+    const activeTab = document.querySelector(".ms_tab_item.active");
+    if (activeTab && activeTab.getAttribute("data-item") === "mstabroundtrip") {
+      return "range";
+    }
+    // Check tab content (fallback)
+    const roundTripContent = document.getElementById("mstabroundtrip");
+    if (roundTripContent && roundTripContent.classList.contains("active")) {
+        return "range";
+    }
+    return "single";
+  };
+
+  const renderCalendar = () => {
+    let firstDayofMonth = new Date(currYear, currMonth, 1).getDay();
+    let lastDateofMonth = new Date(currYear, currMonth + 1, 0).getDate();
+    let lastDayofLastMonth = new Date(currYear, currMonth, 0).getDate();
+    let lastDayofMonth = new Date(currYear, currMonth, lastDateofMonth).getDay();
+
+    let liTag = "";
+
+    // Current Month days
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Previous Month padding
+    const prevMonthYear = currMonth === 0 ? currYear - 1 : currYear;
+    const prevMonth = currMonth === 0 ? 11 : currMonth - 1;
+
+    for (let i = firstDayofMonth; i > 0; i--) {
+      const day = lastDayofLastMonth - i + 1;
+      const dateToCheck = new Date(prevMonthYear, prevMonth, day);
+      const isPast = dateToCheck < today;
+      
+      let className = "prev-month-day";
+      let clickEvent = "";
+      
+      if (isPast) {
+        className += " disabled";
+      } else {
+        const currentDayObj = { day: day, month: prevMonth, year: prevMonthYear };
+        
+        if (isSameDate(currentDayObj, startDate)) {
+          className += " active";
+          if (endDate) className += " range-start";
+        } else if (isSameDate(currentDayObj, endDate)) {
+          className += " active range-end";
+        } else if (startDate && endDate && isAfter(currentDayObj, startDate) && isBefore(currentDayObj, endDate)) {
+          className += " in-range";
+        }
+        
+        clickEvent = `data-day="${day}" data-month="${prevMonth}" data-year="${prevMonthYear}"`;
+      }
+      
+      liTag += `<li class="${className}" ${clickEvent}>${day}</li>`;
+    }
+
+    for (let i = 1; i <= lastDateofMonth; i++) {
+      const dateToCheck = new Date(currYear, currMonth, i);
+      const isPast = dateToCheck < today;
+      
+      let className = "";
+      let clickEvent = "";
+      
+      const currentDayObj = { day: i, month: currMonth, year: currYear };
+
+      if (isPast) {
+        className = "disabled";
+      } else {
+        // Determine classes based on selection
+        if (isSameDate(currentDayObj, startDate)) {
+          className += " active";
+          if (endDate) className += " range-start";
+        } else if (isSameDate(currentDayObj, endDate)) {
+          className += " active range-end";
+        } else if (startDate && endDate && isAfter(currentDayObj, startDate) && isBefore(currentDayObj, endDate)) {
+          className += " in-range";
+        }
+        
+        clickEvent = `data-day="${i}" data-month="${currMonth}" data-year="${currYear}"`;
+      }
+
+      liTag += `<li class="${className}" ${clickEvent}>${i}</li>`;
+    }
+
+    // Next Month padding
+    const nextMonth = currMonth === 11 ? 0 : currMonth + 1;
+    const nextMonthYear = currMonth === 11 ? currYear + 1 : currYear;
+
+    for (let i = lastDayofMonth; i < 6; i++) {
+      const day = i - lastDayofMonth + 1;
+      const dateToCheck = new Date(nextMonthYear, nextMonth, day);
+      const isPast = dateToCheck < today;
+      
+      let className = "next-month-day";
+      let clickEvent = "";
+      
+      const currentDayObj = { day: day, month: nextMonth, year: nextMonthYear };
+
+      if (isPast) {
+        className = "disabled";
+      } else {
+         if (isSameDate(currentDayObj, startDate)) {
+          className += " active";
+          if (endDate) className += " range-start";
+        } else if (isSameDate(currentDayObj, endDate)) {
+          className += " active range-end";
+        } else if (startDate && endDate && isAfter(currentDayObj, startDate) && isBefore(currentDayObj, endDate)) {
+          className += " in-range";
+        }
+        
+        clickEvent = `data-day="${day}" data-month="${nextMonth}" data-year="${nextMonthYear}"`;
+      }
+
+      liTag += `<li class="${className}" ${clickEvent}>${day}</li>`;
+    }
+
+    currentDateText.innerText = `${months[currMonth].toUpperCase()}, ${currYear}`;
+    daysTag.innerHTML = liTag;
+    
+    // Attach click listeners to new elements
+    document.querySelectorAll(".days-grid li:not(.inactive):not(.disabled)").forEach(li => {
+      li.addEventListener("click", () => {
+        const d = parseInt(li.getAttribute("data-day"));
+        const m = parseInt(li.getAttribute("data-month"));
+        const y = parseInt(li.getAttribute("data-year"));
+        handleDateClick(d, m, y);
+      });
+    });
+    
+    updateDisplay();
+  };
+
+  const handleDateClick = (day, month, year) => {
+    const clickedDate = { day, month, year };
+    const mode = getSelectionMode();
+
+    if (mode === "single") {
+      startDate = clickedDate;
+      endDate = null;
+    } else {
+      // Range mode
+      if (!startDate || (startDate && endDate)) {
+        // Start new range
+        startDate = clickedDate;
+        endDate = null;
+      } else {
+        // Completing a range
+        if (isBefore(clickedDate, startDate)) {
+          // Clicked before start, so it becomes new start
+          startDate = clickedDate;
+        } else if (isSameDate(clickedDate, startDate)) {
+            // Clicked same date, do nothing or toggle? Let's keep it as start
+        } else {
+          endDate = clickedDate;
+        }
+      }
+    }
+    renderCalendar();
+  };
+
+  const updateDisplay = () => {
+    const returnDateDisplay = document.querySelector(".return-date-display");
+    const displayReturnDateText = document.getElementById("display-return-date-text");
+    const mode = getSelectionMode();
+
+    if (mode === "range") {
+        if (returnDateDisplay) {
+            returnDateDisplay.style.display = "block";
+            // Ensure it's visible even if inline style says none
+            returnDateDisplay.style.removeProperty("display");
+            returnDateDisplay.style.display = "block"; 
+        }
+    } else {
+        if (returnDateDisplay) returnDateDisplay.style.display = "none";
+    }
+
+    const formatDate = (d) => {
+      const dateObj = new Date(d.year, d.month, d.day);
+      return dateObj.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+    };
+
+    if (!startDate) {
+      displayDateText.innerText = "Select a date";
+      if (displayReturnDateText) displayReturnDateText.innerText = "Select a date";
+      return;
+    }
+
+    displayDateText.innerText = formatDate(startDate);
+
+    if (endDate) {
+      if (displayReturnDateText) displayReturnDateText.innerText = formatDate(endDate);
+    } else {
+      if (displayReturnDateText) displayReturnDateText.innerText = "Select a date";
+    }
+  };
+
+  prevNextIcon.forEach((icon) => {
+    icon.addEventListener("click", () => {
+      currMonth = icon.id === "prev-btn" ? currMonth - 1 : currMonth + 1;
+
+      if (currMonth < 0 || currMonth > 11) {
+        currYear = icon.id === "prev-btn" ? currYear - 1 : currYear + 1;
+        currMonth = currMonth < 0 ? 11 : 0;
+      }
+      renderCalendar();
+    });
+  });
+
+  // Initial render
+  renderCalendar();
+  
+  // Handle Save
+  saveBtn.addEventListener("click", () => {
+    if (!startDate) return;
+    
+    const formatDateStr = (d) => {
+        // Format: YYYY-MM-DD for storage/logic if needed, or just display format
+        // The existing code uses "Select Date" as placeholder.
+        // Let's use the format "DD MMM YYYY" for display
+        const dateObj = new Date(d.year, d.month, d.day);
+        return dateObj.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    };
+
+    const formatDateText = (d) => {
+        const dateObj = new Date(d.year, d.month, d.day);
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    if (window.currentClickedPopup) {
+        const container = window.currentClickedPopup;
+        
+        // One Way / Multi-city
+        const dateFormatted = container.querySelector(".owdateformated, .mcdateformated");
+        const dateAsText = container.querySelector(".owdateastext, .mcdateastext");
+        
+        // Round Trip
+        const rwDateFormatted = container.querySelector(".rwdateformated");
+        const rwDateAsText = container.querySelector(".rwdateastext");
+        const rwReturnDate = container.querySelector(".rwreturndate");
+        
+        if (getSelectionMode() === "range") {
+            if (rwDateFormatted) {
+                if (endDate) {
+                    rwDateFormatted.textContent = `${formatDateStr(startDate)} - ${formatDateStr(endDate)}`;
+                } else {
+                    rwDateFormatted.textContent = formatDateStr(startDate);
+                }
+            }
+            if (rwDateAsText) rwDateAsText.textContent = formatDateText(startDate);
+            if (rwReturnDate && endDate) rwReturnDate.textContent = formatDateText(endDate);
+        } else {
+            if (dateFormatted) dateFormatted.textContent = formatDateStr(startDate);
+            if (dateAsText) dateAsText.textContent = formatDateText(startDate);
+            
+            // Also handle round trip if it was somehow in single mode or just updating start
+             if (rwDateFormatted) rwDateFormatted.textContent = formatDateStr(startDate);
+             if (rwDateAsText) rwDateAsText.textContent = formatDateText(startDate);
+        }
+    }
+    
+    document.querySelector(".date_popup").style.display = "none";
+  });
+  
+  // Reset calendar when opening popup
+  document.addEventListener("click", function(e) {
+      if (e.target.closest(".datepopup")) {
+          // Reset to current date
+          const now = new Date();
+          startDate = { day: now.getDate(), month: now.getMonth(), year: now.getFullYear() };
+          endDate = null;
+          
+          // Reset view to current month
+          currMonth = now.getMonth();
+          currYear = now.getFullYear();
+          
+          renderCalendar();
+      }
+  });
+});

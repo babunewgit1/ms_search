@@ -1,0 +1,187 @@
+:root {
+  --primary-orange: #ff5a48;
+  --dark-bg: #091118;
+  --light-bg: #f4f6f8;
+  --white: #ffffff;
+  --grey-text: #b0b0b0;
+  --cell-grey: #e8e8e8;
+}
+
+.calendar-container {
+  background-color: var(--light-bg);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.date-display {
+  background-color: #eee;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+}
+.date-display .label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #333;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.date-display .value {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #444;
+}
+.date-display .value i {
+  margin-right: 8px;
+  color: #666;
+}
+.calendar-wrapper {
+  background-color: var(--white);
+  border-radius: 20px;
+  padding: 20px 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+.month-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.month-nav h3 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #222;
+}
+.month-nav button {
+  background: none;
+  border: 1px solid #333;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s;
+}
+.month-nav button:hover {
+  background: #f0f0f0;
+  transform: scale(1.1);
+}
+.days-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+.days-header span {
+  font-size: 11px;
+  font-weight: 700;
+  color: #333;
+}
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  list-style: none;
+  gap: 8px;
+  padding: 0;
+}
+.days-grid li {
+  background-color: var(--cell-grey);
+  color: #333;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+/* States for Calendar Days */
+
+/* 1. Previous Month Padding (Unselectable) */
+.days-grid li.inactive {
+  color: #999;
+  background-color: #efefef;
+  cursor: default;
+}
+
+/* 2. Next Month Padding */
+.days-grid li.next-month-day {
+  color: #333;
+  background-color: #f0f0f0;
+  font-weight: 400;
+}
+.days-grid li.next-month-day:hover {
+  background-color: #e0e0e0;
+}
+
+/* 3. Past Date (Unselectable) */
+.days-grid li.disabled {
+  color: #ccc;
+  background-color: #f9f9f9;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* 4. Currently Selected Date */
+.days-grid li.active {
+  background-color: var(--dark-bg);
+  color: var(--primary-orange);
+  transform: scale(1.05);
+}
+
+/* 5. Range Selection */
+.days-grid li.in-range {
+  background-color: #ffe0db; /* Light orange background for range */
+  color: #333;
+  border-radius: 0; /* Square corners for range */
+}
+.days-grid li.range-start {
+  background-color: var(--dark-bg);
+  color: var(--primary-orange);
+  border-radius: 8px 0 0 8px;
+}
+.days-grid li.range-end {
+  background-color: var(--dark-bg);
+  color: var(--primary-orange);
+  border-radius: 0 8px 8px 0;
+}
+
+/* 6. Hover (Current month only) */
+.days-grid
+  li:hover:not(.active):not(.inactive):not(.disabled):not(.next-month-day) {
+  background-color: #d0d0d0;
+}
+
+.save-btn {
+  width: 100%;
+  margin-top: 25px;
+  padding: 15px;
+  background-color: var(--primary-orange);
+  color: var(--white);
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(255, 90, 72, 0.3);
+  transition: background-color 0.3s;
+}
+
+.save-btn:hover {
+  background-color: #e04a3a;
+}

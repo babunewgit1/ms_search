@@ -1,3 +1,185 @@
+/* code for calender  */
+
+.days-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+}
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  list-style: none;
+  gap: 8px;
+  padding: 12px;
+}
+.days-grid li {
+  background-color: #e8e8e8;
+  color: #333;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.selected_date {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 10px;
+  margin-top: 12px;
+}
+
+.date-display {
+  border: 1px solid #cccccc;
+  border-radius: 12px;
+  padding: 10px 8px;
+}
+
+.date-display > span {
+  display: block;
+  font-size: 14px;
+  font-weight: bold;
+  color: #03141b;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.value {
+  display: flex;
+  align-items: center;
+  column-gap: 6px;
+}
+
+.value img {
+  display: inline-block;
+  width: 16px;
+  margin-top: -3px;
+}
+
+.value span#display-date-text,
+.value span#display-date-text {
+  display: inline-block;
+  font-size: 14px !important;
+  color: #1e1e1e !important;
+  font-weight: normal !important;
+  margin-bottom: 0 !important;
+  line-height: 1;
+}
+
+.calendar-wrapper {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  margin-top: 12px;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+}
+
+.month-nav button {
+  display: inline-block;
+  flex-shrink: 0;
+  border: 0;
+  outline: none;
+  padding: 0;
+  background-color: transparent;
+}
+
+.month-nav button img {
+  display: inline-block;
+  width: 24px;
+}
+
+.month-nav h3 {
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #03141b;
+}
+
+.days-header {
+  border-top: 1px solid #cccccc;
+  border-bottom: 1px solid #cccccc;
+  padding: 8px 2px 8px 2px;
+}
+
+.days-header span {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #03141b;
+}
+
+/* 1. Previous Month Padding (Unselectable) */
+.days-grid li.inactive {
+  color: #999;
+  background-color: #efefef;
+  cursor: default;
+}
+
+/* 3. Past Date (Unselectable) */
+.days-grid li.disabled {
+  color: #797979;
+  background-color: #f3f3f3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* 4. Currently Selected Date */
+.days-grid li.active {
+  background-color: #091118 !important;
+  color: #ff5d47 !important;
+}
+
+.days-grid li.in-range {
+  background-color: #ff5d47;
+  color: #fff;
+}
+.days-grid li.range-start {
+  background-color: #091118;
+  color: #ff5d47;
+  border-radius: 8px 0 0 8px;
+}
+.days-grid li.range-end {
+  background-color: #091118;
+  color: #ff5d47;
+  border-radius: 0 8px 8px 0;
+}
+
+.days-grid li.prev-month-day {
+  color: #797979;
+  background-color: #f3f3f3;
+  font-weight: bold;
+}
+
+.calendar-container button.save-btn {
+  display: block;
+  width: 100%;
+  background-color: #ff5d47;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border-radius: 8px;
+  font-weight: bold;
+  color: #fff;
+  padding: 13px 10px 12px 10px;
+}
+
+/* code for calender  */
+
 .search_mobile_popup {
   display: none;
 }
@@ -223,18 +405,10 @@
 }
 
 /* Algolia Search Results Styles */
-.search-results {
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  margin-top: 8px;
-  max-height: 300px;
-  overflow-y: auto;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
 
 .from_popup,
-.to_popup {
+.to_popup,
+.date_popup {
   background-color: #f3f3f3;
   position: fixed;
   width: 100%;
@@ -267,11 +441,6 @@
   background-repeat: no-repeat !important;
   background-size: 16px !important;
   background-position: top 15px right 10px !important;
-}
-
-.from_pop_inp_cnt .search-results,
-.to_pop_inp_cnt .search-results {
-  position: static !important;
 }
 
 /* Toggle Switcher Styles */
@@ -322,7 +491,8 @@
   transform: translateX(22px);
 }
 
-.from_near_checkbox {
+.from_near_checkbox,
+.to_near_checkbox {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -331,23 +501,27 @@
   border-bottom: 1px solid #a8a8a8;
 }
 
-.from_near_checkbox p {
+.from_near_checkbox p,
+.to_near_checkbox p {
   font-size: 15px;
   color: #1e1e1e;
 }
 
-.from_search_text {
+.from_search_text,
+.to_search_text {
   display: flex;
   align-items: center;
   column-gap: 6px;
 }
 
-.from_search_text p {
+.from_search_text p,
+.to_search_text p {
   font-size: 15px;
   color: #1e1e1e;
 }
 
-.from_search_text {
+.from_search_text,
+.to_search_text {
   margin-top: 20px;
 }
 
@@ -389,24 +563,28 @@
   cursor: pointer;
 }
 
-.pop_search-results {
+.pop_search-results_to,
+.pop_search-results_from {
   max-height: 250px;
   overflow: auto;
   margin-top: 10px;
 }
 
-.from_signin {
+.from_signin,
+.to_signin {
   text-align: center;
   margin-top: 80px;
 }
 
-.from_signin p {
+.from_signin p,
+.to_signin p {
   font-size: 16px;
   color: #1e1e1e;
   margin-bottom: 15px;
 }
 
-.from_signin button {
+.from_signin button,
+.to_signin button {
   display: block;
   width: 100%;
   background-color: #ff5d47;
@@ -435,6 +613,10 @@
 .fromairportid,
 .fromairportshortcode,
 .toairportid,
-.toairportshortcode {
+.toairportshortcode,
+.short-name,
+.shortairportcode,
+.mcfromshortcode,
+.mctoshortcode {
   display: none !important;
 }

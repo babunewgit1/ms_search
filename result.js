@@ -1,3 +1,10 @@
+// =============================================
+//     result.js file for jettly
+
+      // old file link :
+      // https://29101afcd41198dafcdd8b88cbac692a.cdn.bubble.io/f1748623551426x609338229586343400/result.js?_gl=1*12dw1e2*_gcl_au*MTQwMzQwMDk0OC4xNzQ2MzAxNDkz*_ga*MTc1OTQ4NTA5NC4xNzQ2MzAxNDI5*_ga_BFPVR2DEE2*czE3NDg1OTYyNTUkbzM4JGcxJHQxNzQ4NjIzNTk1JGo2MCRsMCRoMA
+// =============================================
+
 // select dom element for One way trip
 const addWay = document.querySelector(".sa_way_name");
 const flightWay = document.querySelectorAll(".sa_way_name_list");
@@ -9,6 +16,8 @@ const dateAsText = document.querySelector(".onewaydate");
 const pax = document.querySelector(".onewaypax");
 const searchBox = document.querySelectorAll(".sa_way_search");
 const drpDownCollection = document.querySelectorAll(".from_cl_wrapper");
+const fromShortCode = document.querySelector(".onewayfromshort");
+const toShortCode = document.querySelector(".onewaytoshort");
 
 // getting data form session storage
 const getsessionDate = sessionStorage.getItem("storeData");
@@ -85,6 +94,7 @@ function fillInputOneWay() {
   if (getstoredData.formIdInput) {
     formIdInput.value = getstoredData.formIdInput;
   }
+
   if (getstoredData.toIdInput) {
     toIdInput.value = getstoredData.toIdInput;
   }
@@ -96,6 +106,15 @@ function fillInputOneWay() {
   if (getstoredData.toId) {
     toId.textContent = getstoredData.toId;
   }
+
+  if (getstoredData.fromShortName) {
+    fromShortCode.textContent = getstoredData.fromShortName;
+  }
+
+  if (getstoredData.toShortName) {
+    toShortCode.textContent = getstoredData.toShortName;
+  }
+
   if (getstoredData.dateAsText) {
     dateAsText.value = getstoredData.dateAsText;
   }
@@ -113,6 +132,8 @@ const roundRetDate = document.querySelector(".rretdate");
 const roundPax = document.querySelector(".rpax");
 const roundFromId = document.querySelector(".roundfromid");
 const roundToTd = document.querySelector(".roundtoid");
+const roundFromShotCode = document.querySelector(".roundfromshortcode");
+const roundToShotCode = document.querySelector(".roundtoshortcode");
 
 function fillInputRound() {
   if (getstoredData.formIdInput) {
@@ -129,6 +150,15 @@ function fillInputRound() {
   if (getstoredData.toId) {
     roundToTd.textContent = getstoredData.toId;
   }
+
+  if (getstoredData.fromShortName) {
+    roundFromShotCode.textContent = getstoredData.fromShortName;
+  }
+
+  if (getstoredData.toShortName) {
+    roundToShotCode.textContent = getstoredData.toShortName;
+  }
+
   if (getstoredData.dateAsText) {
     roundDepDate.value = getstoredData.dateAsText;
   }
@@ -155,6 +185,7 @@ if (getstoredData.way === "multi-city") {
                 value="${getstoredData.formIdInput[i]}"
               />
               <p class="portid multicityformid">${getstoredData.fromId[i]}</p>
+              <p class="mcfromshortcode">${getstoredData.fromShortName[i]}</p>
               <img
                 src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/6730586b420dae5eaf21e2eb_gps.png"
                 alt="GPS Icon"
@@ -171,6 +202,7 @@ if (getstoredData.way === "multi-city") {
                 value="${getstoredData.toIdInput[i]}"
               />
               <p class="portid multicitytoid">${getstoredData.toId[i]}</p>
+              <p class="mctoshortcode">${getstoredData.toShortName[i]}</p>
               <img
                 src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/6730586b420dae5eaf21e2eb_gps.png"
                 alt="GPS Icon"
@@ -246,10 +278,12 @@ oneWaySubmit.addEventListener("click", function () {
   const timeAsText = "00:00:00";
   const pax = document.querySelector(".onewaypax").value;
   const appDate = dateAsText;
+  const fromShortName = document.querySelector(".onewayfromshort").textContent;
+  const toShortName = document.querySelector(".onewaytoshort").textContent;
 
   const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
 
-  if (fromId && toId && dateAsText && pax && formIdInput && toIdInput) {
+  if (fromId && toId && dateAsText && pax && formIdInput && toIdInput && fromShortName && toShortName) {
     const storeData = {
       way: "one way",
       fromId,
@@ -261,6 +295,8 @@ oneWaySubmit.addEventListener("click", function () {
       timeStamp,
       formIdInput,
       toIdInput,
+      fromShortName,
+      toShortName,
     };
 
     sessionStorage.setItem("storeData", JSON.stringify(storeData));
@@ -299,7 +335,13 @@ roundTripSubmit.addEventListener("click", function () {
   const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
   const timeStampReturn = getUnixTimestamp(returnDateAsText, timeAsTextReturn);
 
-  if (formIdInput && toIdInput && dateAsText && returnDateAsText && pax) {
+
+  const fromShortName = document.querySelector(
+    ".roundfromshortcode"
+  ).textContent;
+  const toShortName = document.querySelector(".roundtoshortcode").textContent;
+
+  if (formIdInput && toIdInput && dateAsText && returnDateAsText && pax && fromShortName && toShortName) {
     const storeData = {
       way: "round trip",
       formIdInput,
@@ -320,6 +362,8 @@ roundTripSubmit.addEventListener("click", function () {
       appDateReturn,
       timeStamp,
       timeStampReturn,
+      fromShortName,
+      toShortName,
     };
 
     sessionStorage.setItem("storeData", JSON.stringify(storeData));
@@ -339,13 +383,18 @@ multiCitySubmit.addEventListener("click", function () {
   const multiPax = document.querySelectorAll(".multicitypax");
   const timeAsText = "00:00:00";
 
+  const multiFromShort = document.querySelectorAll(".mcfromairportcode");
+  const multiToShort = document.querySelectorAll(".mctoairportcode");
+
   let multiUnixTime = [];
   let checkFormPort = true,
     checkToPort = true,
     checkFormId = true,
     checkToId = true;
   let checkDate = true,
-    checkPax = true;
+    checkPax = true,
+    checkFromShort = true,
+    checkToShort = true;
 
   let storeFormPort = [],
     storeToPort = [],
@@ -355,6 +404,8 @@ multiCitySubmit.addEventListener("click", function () {
     storeAppDate = [],
     storeTime = [],
     storePax = [];
+  let storeFromShortName = [],
+    storeToShortName = [];
 
   multiDateAsText.forEach((item) => {
     if (item.value) {
@@ -392,13 +443,25 @@ multiCitySubmit.addEventListener("click", function () {
     else checkPax = false;
   });
 
+  multiFromShort.forEach((item) => {
+    if (item.textContent) storeFromShortName.push(item.textContent);
+    else checkFromShort = false;
+  });
+
+  multiToShort.forEach((item) => {
+    if (item.textContent) storeToShortName.push(item.textContent);
+    else checkToShort = false;
+  });
+
   if (
     checkFormPort &&
     checkToPort &&
     checkFormId &&
     checkToId &&
     checkDate &&
-    checkPax
+    checkPax &&
+    checkFromShort &&
+    checkToShort
   ) {
     const storeData = {
       way: "multi-city",
@@ -411,6 +474,8 @@ multiCitySubmit.addEventListener("click", function () {
       timeStamp: multiUnixTime,
       formIdInput: storeFormPort,
       toIdInput: storeToPort,
+      fromShortName: storeFromShortName,
+      toShortName: storeToShortName,
     };
 
     sessionStorage.setItem("storeData", JSON.stringify(storeData));
