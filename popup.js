@@ -93,7 +93,7 @@
             // So we simply return and let the other script handle it.
             if (!emfieldnameEl || !uniqueidEl || !shortcodeEl) return;
 
-            const emfieldname = emfieldnameEl.textContent;
+            const emfieldname = `<span class="light_font">${emfieldnameEl.textContent}</span> <span>(${shortcodeEl.textContent})</span>`;
             const uniqueid = uniqueidEl.textContent;
             const shortcode = shortcodeEl.textContent;
 
@@ -103,7 +103,7 @@
               const idElement = window.currentClickedPopup.querySelector(".fromairportid, .toairportid");
               const shortcodeElement = window.currentClickedPopup.querySelector(".fromairportshortcode, .toairportshortcode");
 
-              if (nameElement) nameElement.textContent = emfieldname;
+              if (nameElement) nameElement.innerHTML = emfieldname;
               if (idElement) idElement.textContent = uniqueid;
               if (shortcodeElement) shortcodeElement.textContent = shortcode;
             }
@@ -232,17 +232,22 @@
 // popup display code
 const popupTigger = document.querySelector(".search_mobile_wrapper");
 const popBoxOne = document.querySelector(".search_mobile_popup");
-const crossPopup = popBoxOne.querySelector(".msp_header_icon");
 
-popupTigger.addEventListener("click", function(){
-   popBoxOne.style.display="block";
-   document.querySelector("body").style.overflow = "hidden";
-})
+if (popupTigger && popBoxOne) {
+  const crossPopup = popBoxOne.querySelector(".msp_header_icon");
 
-crossPopup.addEventListener("click", function(){
-   popBoxOne.style.display = "none";
-   document.querySelector("body").style.overflow = "auto";
-})
+  popupTigger.addEventListener("click", function(){
+     popBoxOne.style.display="block";
+     document.querySelector("body").style.overflow = "hidden";
+  })
+
+  if (crossPopup) {
+    crossPopup.addEventListener("click", function(){
+       popBoxOne.style.display = "none";
+       document.querySelector("body").style.overflow = "auto";
+    })
+  }
+}
 
   
   
@@ -265,6 +270,11 @@ crossPopup.addEventListener("click", function(){
 
       // Add active to matching content tab
       document.getElementById(targetId).classList.add("active");
+
+      // Reset PAX counters to 0 when switching tabs
+      document.querySelectorAll(".pax_count").forEach(span => {
+        span.textContent = "0";
+      });
     });
   });
 
@@ -310,13 +320,15 @@ const owToAirpId = document.querySelector(".owtaid");
 const owFormatedDate = document.querySelector(".owdateformated");
 const owDateAsText = document.querySelector(".owdateastext");
 const owPax = document.querySelector(".owpax");
+const owFromAirpShortName = document.querySelector(".owfashort");
+const owToAirpShortName = document.querySelector(".owtashort ");
 
 function fillInputOneWay() {
   if (getstoredDataSM.formIdInput) {
-    owFromAirpName.innerHTML = `${getstoredDataSM.formIdInput} <span>(${getstoredDataSM.fromShortName})</span>`;
+    owFromAirpName.innerHTML = `<span class="light_font">${getstoredDataSM.formIdInput}</span> <span>(${getstoredDataSM.fromShortName})</span>`;
   }
   if (getstoredDataSM.toIdInput) {
-    owToAirpName.innerHTML = `${getstoredDataSM.toIdInput} <span>(${getstoredDataSM.toShortName})</span>`;
+    owToAirpName.innerHTML = `<span class="light_font">${getstoredDataSM.toIdInput}</span> <span>(${getstoredDataSM.toShortName})</span>`;
   }
 
   if (getstoredDataSM.fromId) {
@@ -334,8 +346,18 @@ function fillInputOneWay() {
     owFormatedDate.textContent = formatDate(getstoredDataSM.dateAsText);
   }
 
+  if (getstoredDataSM.fromShortName) {
+    owFromAirpShortName.textContent = getstoredDataSM.fromShortName;
+  }
+
+  if (getstoredDataSM.toShortName) {
+    owToAirpShortName.textContent = getstoredDataSM.toShortName;
+  }
+
   if (getstoredDataSM.pax) {
-    owPax.textContent = `${getstoredDataSM.pax} passenger`;
+    owPax.innerHTML = `<span class="paxcount">${getstoredDataSM.pax}</span> ${
+      parseInt(getstoredDataSM.pax) > 1 ? "Passengers" : "Passenger"
+    }`;
   }
 }
 
@@ -348,13 +370,15 @@ const rtFormatedDate = document.querySelector(".rwdateformated");
 const rtDateAsText = document.querySelector(".rwdateastext");
 const rtReturnDate = document.querySelector(".rwreturndate");
 const rtPax = document.querySelector(".rwpax");
+const rwFromAirpShortName = document.querySelector(".rwfashort");
+const rwToAirpShortName = document.querySelector(".rwtashort");
 
 function fillInputRound() {
   if (getstoredDataSM.formIdInput) {
-    rtFromAirpName.innerHTML = `${getstoredDataSM.formIdInput} <span>(${getstoredDataSM.fromShortName})</span>`;
+    rtFromAirpName.innerHTML = `<span class="light_font">${getstoredDataSM.formIdInput}</span> <span>(${getstoredDataSM.fromShortName})</span>`;
   }
   if (getstoredDataSM.toIdInput) {
-    rtToAirpName.innerHTML = `${getstoredDataSM.toIdInput} <span>(${getstoredDataSM.toShortName})</span>`;
+    rtToAirpName.innerHTML = `<span class="light_font">${getstoredDataSM.toIdInput}</span> <span>(${getstoredDataSM.toShortName})</span>`;
   }
 
   if (getstoredDataSM.fromId) {
@@ -372,6 +396,14 @@ function fillInputRound() {
     rtReturnDate.textContent = getstoredDataSM.returnDateAsText;
   }
 
+  if (getstoredDataSM.fromShortName) {
+    rwFromAirpShortName.textContent = getstoredDataSM.fromShortName;
+  }
+
+  if (getstoredDataSM.toShortName) {
+    rwToAirpShortName.textContent = getstoredDataSM.toShortName;
+  }
+
   if (getstoredDataSM.dateAsText) {
     rtFormatedDate.textContent = `${formatDate(
       getstoredDataSM.dateAsText
@@ -379,13 +411,31 @@ function fillInputRound() {
   }
 
   if (getstoredDataSM.pax) {
-    rtPax.textContent = `${getstoredDataSM.pax} passenger`;
+    rtPax.innerHTML = `<span class="paxcount">${
+      getstoredDataSM.pax
+    }</span> ${parseInt(getstoredDataSM.pax) > 1 ? "Passengers" : "Passenger"}`;
   }
 }
 
 
 // for multicity
-if (getstoredDataSM.way === "multi-city") {   
+if (getstoredDataSM.way === "multi-city") {
+  const isAnyArrayEmpty = 
+    (getstoredDataSM.fromId && getstoredDataSM.fromId.length === 0) ||
+    (getstoredDataSM.toId && getstoredDataSM.toId.length === 0) ||
+    (getstoredDataSM.formIdInput && getstoredDataSM.formIdInput.length === 0) ||
+    (getstoredDataSM.toIdInput && getstoredDataSM.toIdInput.length === 0) ||
+    (getstoredDataSM.fromShortName && getstoredDataSM.fromShortName.length === 0) ||
+    (getstoredDataSM.toShortName && getstoredDataSM.toShortName.length === 0) ||
+    (getstoredDataSM.dateAsText && getstoredDataSM.dateAsText.length === 0) ||
+    (getstoredDataSM.pax && getstoredDataSM.pax.length === 0);
+
+  if (isAnyArrayEmpty) {
+    const searchWrapper = document.querySelector(".search_mobile_wrapper");
+    if (searchWrapper) {
+      searchWrapper.innerHTML = "<p>Please add new flight and search</p>";
+    }
+  }
   for (let i = 0; i < getstoredDataSM.fromId.length; i++) {
     document.querySelector(".multicity_box").innerHTML += `
       <div class="multicity_wrapping" data-from-storage="true" data-flight-index="${i}">
@@ -406,9 +456,13 @@ if (getstoredDataSM.way === "multi-city") {
                   alt="icon"
                   />
                </div>
-               <p class="mcfaname fromairportname">${getstoredDataSM.formIdInput[i]} <span>(${getstoredDataSM.fromShortName[i]})</span></p>
+               <p class="mcfaname fromairportname"><span class="light_font">${
+                 getstoredDataSM.formIdInput[i]
+               }</span> <span>(${getstoredDataSM.fromShortName[i]})</span></p>
                <p class="mcfaid fromairportid">${getstoredDataSM.fromId[i]}</p>
-               <p class="mcfashort fromairportshortcode">${getstoredDataSM.fromShortName[i]}</p>
+               <p class="mcfashort fromairportshortcode">${
+                 getstoredDataSM.fromShortName[i]
+               }</p>
             </div>
          </div>
          <div class="mspop_cnt_box topopup">
@@ -420,9 +474,13 @@ if (getstoredDataSM.way === "multi-city") {
                   alt="icon"
                   />
                </div>
-               <p class="mctaname toairportname">${getstoredDataSM.toIdInput[i]} <span>(${getstoredDataSM.toShortName[i]})</span></p>
+               <p class="mctaname toairportname"> <span class="light_font">${
+                 getstoredDataSM.toIdInput[i]
+               } </span> <span>(${getstoredDataSM.toShortName[i]})</span></p>
                <p class="mctaid toairportid">${getstoredDataSM.toId[i]}</p>
-               <p class="mctashort toairportshortcode">${getstoredDataSM.toShortName[i]}</p>
+               <p class="mctashort toairportshortcode">${
+                 getstoredDataSM.toShortName[i]
+               }</p>
             </div>
          </div>
          <div class="mspop_cnt_box datepopup">
@@ -449,7 +507,11 @@ if (getstoredDataSM.way === "multi-city") {
                   alt="icon"
                   />
                </div>
-               <p class="mcpax">${getstoredDataSM.pax[i]}</p>
+               <p class="mcpax"><span class="paxcount">${
+                 getstoredDataSM.pax[i]
+               }</span> ${
+      parseInt(getstoredDataSM.pax[i]) > 1 ? "Passengers" : "Passenger"
+    }</p>
             </div>
          </div>
       </div>
@@ -595,6 +657,23 @@ document.addEventListener("click", (e) => {
         storedData.pax.splice(flightIndex, 1);
 
         sessionStorage.setItem("storeData", JSON.stringify(storedData));
+
+        const isAnyArrayEmpty = 
+          (storedData.fromId && storedData.fromId.length === 0) ||
+          (storedData.toId && storedData.toId.length === 0) ||
+          (storedData.formIdInput && storedData.formIdInput.length === 0) ||
+          (storedData.toIdInput && storedData.toIdInput.length === 0) ||
+          (storedData.fromShortName && storedData.fromShortName.length === 0) ||
+          (storedData.toShortName && storedData.toShortName.length === 0) ||
+          (storedData.dateAsText && storedData.dateAsText.length === 0) ||
+          (storedData.pax && storedData.pax.length === 0);
+
+        if (isAnyArrayEmpty) {
+          const searchWrapper = document.querySelector(".search_mobile_wrapper");
+          if (searchWrapper) {
+            searchWrapper.innerHTML = "<p>Please add new flight and search</p>";
+          }
+        }
       }
     }
 
@@ -866,9 +945,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!startDate) return;
     
     const formatDateStr = (d) => {
-        // Format: YYYY-MM-DD for storage/logic if needed, or just display format
-        // The existing code uses "Select Date" as placeholder.
-        // Let's use the format "DD MMM YYYY" for display
         const dateObj = new Date(d.year, d.month, d.day);
         return dateObj.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
     };
@@ -932,3 +1008,343 @@ document.addEventListener("DOMContentLoaded", function () {
       }
   });
 });
+
+// PAX Popup Logic
+(function() {
+    const paxPopup = document.querySelector(".pax_popup");
+    const paxPopupClose = document.querySelector(".pax_popup_header .msp_header_icon");
+    const savePaxBtn = document.querySelector(".save-pax-btn");
+    let currentPaxElement = null;
+
+    // Open PAX Popup (Event Delegation)
+    document.addEventListener("click", function(e) {
+       // Check if the clicked element is inside a pax container
+       const paxItem = e.target.closest(".mspop_cnt_item");
+       
+       if (paxItem) {
+           const paxTextElement = paxItem.querySelector(".owpax, .rwpax, .mcpax");
+           
+           if (paxTextElement) {
+               currentPaxElement = paxTextElement;
+               
+               if (paxPopup) paxPopup.style.display = "block";
+           }
+       }
+    });
+
+    // Close PAX Popup
+    if (paxPopupClose) {
+        paxPopupClose.addEventListener("click", function() {
+            if (paxPopup) paxPopup.style.display = "none";
+        });
+    }
+
+    // Handle Counters
+    const counters = document.querySelectorAll(".pax_counter");
+    counters.forEach(counter => {
+        const minusBtn = counter.querySelector(".pax_minus");
+        const plusBtn = counter.querySelector(".pax_plus");
+        const countSpan = counter.querySelector(".pax_count");
+
+        minusBtn.addEventListener("click", function() {
+            let count = parseInt(countSpan.textContent);
+            if (count > 0) {
+                count--;
+                countSpan.textContent = count;
+            }
+        });
+
+        plusBtn.addEventListener("click", function() {
+            let count = parseInt(countSpan.textContent);
+            count++;
+            countSpan.textContent = count;
+        });
+    });
+
+    // Save Passengers
+    if (savePaxBtn) {
+        savePaxBtn.addEventListener("click", function() {
+            let totalPax = 0;
+            
+            document.querySelectorAll(".pax_count").forEach(span => {
+                const count = parseInt(span.textContent);
+                totalPax += count;
+            });
+
+            if (totalPax === 0) {
+                alert("add atletast 1 passenger");
+                return;
+            }
+
+            if (currentPaxElement) {
+                let text = `<span class="paxcount">${totalPax}</span> ${
+                  totalPax > 1 ? "Passengers" : "Passenger"
+                }`;
+                currentPaxElement.innerHTML = text;
+            }
+
+            if (paxPopup) paxPopup.style.display = "none";
+        });
+    }
+})();
+
+
+// update session storage and display new search result
+// ✅ One Way Submission
+document
+  .querySelector(".oneway_search_btn")
+  .addEventListener("click", function () {
+    const formIdInput = document.querySelector(
+      ".owfaname span.light_font"
+    ).textContent;
+    const toIdInput = document.querySelector(".owtaname span.light_font").textContent;
+    const fromId = document.querySelector(".owfaid").textContent;
+    const toId = document.querySelector(".owtaid").textContent;
+    const dateAsText = document.querySelector(".owdateastext").textContent;
+    const timeAsText = "00:00:00";
+    const pax = document.querySelector("#mstaboneway .paxcount").textContent;
+    const appDate = dateAsText;
+    const fromShortName = document.querySelector(".owfashort").textContent;
+    const toShortName = document.querySelector(".owtashort").textContent;
+    const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
+
+    console.log("way :", "one way");
+    console.log("formIdInput :", formIdInput);
+    console.log("toIdInput :", toIdInput);
+    console.log("fromId :", fromId);
+    console.log("toId :", toId);
+    console.log("dateAsText :", dateAsText);
+    console.log("timeAsText :", timeAsText);
+    console.log("pax :", pax);
+    console.log("appDate :", appDate);
+    console.log("timeStamp :", timeStamp);
+    console.log("fromShortName :", fromShortName);
+    console.log("toShortName :", toShortName);
+
+    if (
+      fromId &&
+      toId &&
+      dateAsText &&
+      pax &&
+      formIdInput &&
+      toIdInput &&
+      fromShortName &&
+      toShortName
+    ) {
+      const storeData = {
+        way: "one way",
+        fromId,
+        toId,
+        dateAsText,
+        timeAsText,
+        pax,
+        appDate,
+        timeStamp,
+        formIdInput,
+        toIdInput,
+        fromShortName,
+        toShortName,
+      };
+
+      sessionStorage.setItem("storeData", JSON.stringify(storeData));
+      // window.location.href = `/aircraft`;
+    } else {
+      alert("Please fill up the form properly");
+    }
+  });
+
+
+  // ✅ Round Trip Submission
+document
+  .querySelector(".round_search_btn")
+  .addEventListener("click", function () {
+    const formIdInput = document.querySelector(".rwfaname span.light_font").textContent;
+    const toIdInput = document.querySelector(
+      ".rwtaname span.light_font"
+    ).textContent;
+
+    const fromInputReturn = document.querySelector(
+      ".rwtaname span.light_font"
+    ).textContent;
+    const toInputReturn = document.querySelector(
+      ".rwfaname span.light_font"
+    ).textContent;
+
+    const fromId = document.querySelector(".rwfaid").textContent;
+    const toId = document.querySelector(".rwtaid").textContent;
+
+    const returnFromId = document.querySelector(".rwtaid").textContent;
+    const returnToId = document.querySelector(".rwfaid").textContent;
+
+    const dateAsText = document.querySelector(".rwdateastext").textContent;
+    const returnDateAsText = document.querySelector(".rwreturndate").textContent;
+
+    const timeAsText = "00:00:00";
+    const timeAsTextReturn = "00:00:00";
+
+    const pax = document.querySelector("#mstabroundtrip .paxcount").textContent;
+    const paxReturn = pax;
+
+    const appDate = dateAsText;
+    const appDateReturn = returnDateAsText;
+
+    const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
+    const timeStampReturn = getUnixTimestamp(
+      returnDateAsText,
+      timeAsTextReturn
+    );
+
+    const fromShortName = document.querySelector(".rwfashort").textContent;
+    const toShortName = document.querySelector(".rwtashort").textContent;
+
+    console.log("way :", "round trip");
+    console.log("formIdInput :", formIdInput);
+    console.log("toIdInput :", toIdInput);
+    console.log("fromInputReturn :", fromInputReturn);
+    console.log("toInputReturn :", toInputReturn);
+    console.log("fromId :", fromId);
+    console.log("toId :", toId);
+    console.log("returnFromId :", returnFromId);
+    console.log("returnToId :", returnToId);
+    console.log("dateAsText :", dateAsText);
+    console.log("returnDateAsText :", returnDateAsText);
+    console.log("timeAsText :", timeAsText);
+    console.log("timeAsTextReturn :", timeAsTextReturn);
+    console.log("pax :", pax);
+    console.log("paxReturn :", paxReturn);
+    console.log("appDate :", appDate);
+    console.log("appDateReturn :", appDateReturn);
+    console.log("timeStamp :", timeStamp);
+    console.log("timeStampReturn :", timeStampReturn);
+    console.log("fromShortName :", fromShortName);
+    console.log("toShortName :", toShortName);
+
+    if (
+      formIdInput &&
+      toIdInput &&
+      dateAsText &&
+      returnDateAsText &&
+      pax &&
+      fromShortName &&
+      toShortName
+    ) {
+      const storeData = {
+        way: "round trip",
+        formIdInput,
+        toIdInput,
+        fromInputReturn,
+        toInputReturn,
+        fromId,
+        toId,
+        returnFromId,
+        returnToId,
+        dateAsText,
+        returnDateAsText,
+        timeAsText,
+        timeAsTextReturn,
+        pax,
+        paxReturn,
+        appDate,
+        appDateReturn,
+        timeStamp,
+        timeStampReturn,
+        fromShortName,
+        toShortName,
+      };
+
+      sessionStorage.setItem("storeData", JSON.stringify(storeData));
+      // window.location.href = `/aircraft`;
+    } else {
+      alert("Please fill up the form properly");
+    }
+  });
+
+
+// ✅ Multi-City Submission
+document
+  .querySelector(".multicity_search_btn")
+  .addEventListener("click", function () {
+    const containers = [];
+    const predefine = document.querySelector(".multicity_predefine");
+    if (predefine && predefine.offsetParent !== null) {
+        containers.push(predefine);
+    }
+    document.querySelectorAll(".multicity_wrapping").forEach(el => containers.push(el));
+
+    let storeFormPort = [],
+      storeToPort = [],
+      storeFormId = [],
+      storeToId = [];
+    let storeDate = [],
+      storeAppDate = [],
+      storeTime = [],
+      storePax = [];
+    let storeFromShortName = [],
+      storeToShortName = [];
+    let multiUnixTime = [];
+    
+    let isValid = true;
+    const timeAsText = "00:00:00";
+
+    containers.forEach((container) => {
+        const fromPort = container.querySelector(".mcfaname span.light_font")?.textContent;
+        const toPort = container.querySelector(".mctaname span.light_font")?.textContent;
+        const fromId = container.querySelector(".mcfaid")?.textContent;
+        const toId = container.querySelector(".mctaid")?.textContent;
+        const dateText = container.querySelector(".mcdateastext")?.textContent;
+        const pax = container.querySelector(".paxcount")?.textContent;
+        const fromShort = container.querySelector(".mcfashort")?.textContent;
+        const toShort = container.querySelector(".mctashort")?.textContent;
+
+        if (fromPort && toPort && fromId && toId && dateText && pax && fromShort && toShort) {
+            storeFormPort.push(fromPort);
+            storeToPort.push(toPort);
+            storeFormId.push(fromId);
+            storeToId.push(toId);
+            storeDate.push(dateText);
+            storeAppDate.push(dateText);
+            storeTime.push(timeAsText);
+            storePax.push(pax);
+            storeFromShortName.push(fromShort);
+            storeToShortName.push(toShort);
+            multiUnixTime.push(getUnixTimestamp(dateText, timeAsText));
+        } else {
+            isValid = false;
+        }
+    });
+
+    console.log("way :", "multi-city");
+    console.log("fromId :", storeFormId);
+    console.log("toId :", storeToId);
+    console.log("dateAsText :", storeDate);
+    console.log("timeAsText :", storeTime);
+    console.log("pax :", storePax);
+    console.log("appDate :", storeAppDate);
+    console.log("timeStamp :", multiUnixTime);
+    console.log("formIdInput :", storeFormPort);
+    console.log("toIdInput :", storeToPort);
+    console.log("fromShortName :", storeFromShortName);
+    console.log("toShortName :", storeToShortName);
+
+    if (isValid && containers.length > 0) {
+      const storeData = {
+        way: "multi-city",
+        fromId: storeFormId,
+        toId: storeToId,
+        dateAsText: storeDate,
+        timeAsText: storeTime,
+        pax: storePax,
+        appDate: storeAppDate,
+        timeStamp: multiUnixTime,
+        formIdInput: storeFormPort,
+        toIdInput: storeToPort,
+        fromShortName: storeFromShortName,
+        toShortName: storeToShortName,
+      };
+
+      sessionStorage.setItem("storeData", JSON.stringify(storeData));
+      // window.location.href = `/aircraft`;
+    } else {
+      alert("Please fill up the form properly.");
+    }
+  });

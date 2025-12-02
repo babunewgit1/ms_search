@@ -15,10 +15,12 @@ function formatDate(dateString) {
 
 // Helper function to create a flight card
 function createFlightCard(fromName, toName, date, passengers) {
+  const safeFrom = fromName ? fromName.toUpperCase() : "";
+  const safeTo = toName ? toName.toUpperCase() : "";
   return `
           <div class="flight_card">
       <div class="flight_card_left">
-        <p>${fromName.toUpperCase()} - ${toName.toUpperCase()}</p>
+        <p>${safeFrom} - ${safeTo}</p>
         <div class="flight_card_left_cnt">
           <div class="fcl_date">
             <div class="fcl_date_icon">
@@ -39,7 +41,7 @@ function createFlightCard(fromName, toName, date, passengers) {
               />
             </div>
             <div class="fcl_pax_number">
-              <p>${passengers}</p>
+              <p>${passengers} ${parseInt(passengers) > 1 ? "Passengers" : "Passenger"}</p>
             </div>
           </div>
         </div>
@@ -60,14 +62,17 @@ const isMultiCity = Array.isArray(flightData.fromShortName);
 const container = document.getElementById("flightContainer");
 
 if (isMultiCity) {
-  // Handle multi-city data (arrays) - show only last flight
-  const lastIndex = flightData.fromShortName.length - 1;
-  const fromName = flightData.fromShortName[lastIndex];
-  const toName = flightData.toShortName[lastIndex];
-  const date = flightData.dateAsText[lastIndex];
-  const passengers = flightData.pax[lastIndex];
+  if (flightData.fromShortName && flightData.fromShortName.length > 0) {
+    const lastIndex = flightData.fromShortName.length - 1;
+    const fromName = flightData.fromShortName[lastIndex];
+    const toName = flightData.toShortName[lastIndex];
+    const date = flightData.dateAsText[lastIndex];
+    const passengers = flightData.pax[lastIndex];
 
-  container.innerHTML = createFlightCard(fromName, toName, date, passengers);
+    if (fromName && toName) {
+      container.innerHTML = createFlightCard(fromName, toName, date, passengers);
+    }
+  }
 } else {
   // Handle single trip data
   if (flightData.fromShortName && flightData.toShortName) {
