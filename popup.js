@@ -179,6 +179,32 @@
           if (frompopup) {
             window.currentClickedPopup = frompopup;
             document.querySelector(".from_popup").style.display = "block";
+
+            // Manage nearby checkbox injection
+            const isMultiCity = document.getElementById("mstabmulticity").classList.contains("active");
+            const fromInputBox = document.querySelector(".from_input_box");
+            const existingCheckbox = document.querySelector(".from_near_checkbox");
+
+            if (!isMultiCity) {
+                if (!existingCheckbox && fromInputBox) {
+                    const checkboxHTML = `
+                        <div class="from_near_checkbox">
+                          <p>Include Nearby Airports</p>
+                          <div class="toggle-switcher-container">
+                            <label class="toggle-switcher">
+                              <input type="checkbox" />
+                              <span class="slider"></span>
+                            </label>
+                          </div>
+                        </div>`;
+                    fromInputBox.insertAdjacentHTML('afterend', checkboxHTML);
+                }
+            } else {
+                if (existingCheckbox) {
+                    existingCheckbox.remove();
+                }
+            }
+
             // Clear the search input
             const algolioInput = document.querySelector(".algolio_input_from");
             if (algolioInput) algolioInput.value = "";
@@ -191,6 +217,32 @@
           if (topopup) {
             window.currentClickedPopup = topopup;
             document.querySelector(".to_popup").style.display = "block";
+
+            // Manage nearby checkbox injection
+            const isMultiCity = document.getElementById("mstabmulticity").classList.contains("active");
+            const toInputBox = document.querySelector(".to_input_box");
+            const existingCheckbox = document.querySelector(".to_near_checkbox");
+
+            if (!isMultiCity) {
+                if (!existingCheckbox && toInputBox) {
+                    const checkboxHTML = `
+                        <div class="to_near_checkbox">
+                          <p>Include Nearby Airports</p>
+                          <div class="toggle-switcher-container">
+                            <label class="toggle-switcher">
+                              <input type="checkbox" />
+                              <span class="slider"></span>
+                            </label>
+                          </div>
+                        </div>`;
+                    toInputBox.insertAdjacentHTML('afterend', checkboxHTML);
+                }
+            } else {
+                if (existingCheckbox) {
+                    existingCheckbox.remove();
+                }
+            }
+
             // Clear the search input
             const algolioInput = document.querySelector(".algolio_input_to");
             if (algolioInput) algolioInput.value = "";
@@ -694,8 +746,6 @@ document.addEventListener("click", (e) => {
     });
   }
 });
-
-
 
 // Calendar Implementation
 document.addEventListener("DOMContentLoaded", function () {
