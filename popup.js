@@ -1,3 +1,105 @@
+// code for displaying info from session storage in card of aircraft page start
+// Global state variables for nearby checkbox
+let oneWayFromNearby = false;
+let oneWayToNearby = false;
+let roundTripFromNearby = false;
+let roundTripToNearby = false;
+
+const flightData = JSON.parse(sessionStorage.getItem("storeData") || "{}");
+// Helper function to format date
+function formatDate(dateString) {
+  if (!dateString) {
+    return "Select Date";
+  }
+  // Parse the date string directly without timezone conversion
+  const [year, month, day] = dateString.split("-");
+  const date = new Date(year, month - 1, day);
+  const options = { day: "numeric", month: "short", year: "numeric" };
+  return date.toLocaleDateString("en-US", options);
+}
+
+// Helper function to create a flight card
+function createFlightCard(fromName, toName, date, passengers) {
+  const safeFrom = fromName ? fromName.toUpperCase() : "";
+  const safeTo = toName ? toName.toUpperCase() : "";
+  return `
+          <div class="flight_card">
+      <div class="flight_card_left">
+        <p>${safeFrom} - ${safeTo}</p>
+        <div class="flight_card_left_cnt">
+          <div class="fcl_date">
+            <div class="fcl_date_icon">
+              <img
+                src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69297cf8959d73a72ae7e1c6_icon.png"
+                alt=""
+              />
+            </div>
+            <div class="fcl_date_text">
+              <p>${formatDate(date)}</p>
+            </div>
+          </div>
+          <div class="fcl_pax">
+            <div class="fcl_pax_icon">
+              <img
+                src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69297d656f3f170c84ba8db2_pax.png"
+                alt=""
+              />
+            </div>
+            <div class="fcl_pax_number">
+              <p>${passengers} ${
+    parseInt(passengers) > 1 ? "Passengers" : "Passenger"
+  }</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="flight_card_right">
+        <img
+          src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69297db62af820959f72a1ed_filtetr.png"
+          alt=""
+        />
+      </div>
+    </div>       
+        `;
+}
+
+// Check if data is array (multi-city) or single trip
+const isMultiCity = Array.isArray(flightData.fromShortName);
+const container = document.getElementById("flightContainer");
+
+if (isMultiCity) {
+  if (flightData.fromShortName && flightData.fromShortName.length > 0) {
+    const lastIndex = flightData.fromShortName.length - 1;
+    const fromName = flightData.fromShortName[lastIndex];
+    const toName = flightData.toShortName[lastIndex];
+    const date = flightData.dateAsText[lastIndex];
+    const passengers = flightData.pax[lastIndex];
+
+    if (fromName && toName) {
+      container.innerHTML = createFlightCard(
+        fromName,
+        toName,
+        date,
+        passengers
+      );
+    }
+  }
+} else {
+  // Handle single trip data
+  if (flightData.fromShortName && flightData.toShortName) {
+    const cardHTML = createFlightCard(
+      flightData.fromShortName,
+      flightData.toShortName,
+      flightData.dateAsText,
+      flightData.pax || "0"
+    );
+    container.innerHTML = cardHTML;
+  }
+}
+
+// code for displaying info from session storage in card of aircraft page end
+
+
 // algolio search
 // Wait for DOM to be ready
       document.addEventListener("DOMContentLoaded", function () {
@@ -182,8 +284,11 @@
 
             // Manage nearby checkbox injection
             const isMultiCity = document.getElementById("mstabmulticity").classList.contains("active");
+            const isOneWay = document.getElementById("mstaboneway").classList.contains("active");
+            const isRoundTrip = document.getElementById("mstabroundtrip").classList.contains("active");
+
             const fromInputBox = document.querySelector(".from_input_box");
-            const existingCheckbox = document.querySelector(".from_near_checkbox");
+            let existingCheckbox = document.querySelector(".from_near_checkbox");
 
             if (!isMultiCity) {
                 if (!existingCheckbox && fromInputBox) {
@@ -198,7 +303,27 @@
                           </div>
                         </div>`;
                     fromInputBox.insertAdjacentHTML('afterend', checkboxHTML);
+                    existingCheckbox = document.querySelector(".from_near_checkbox");
                 }
+
+                // Sync state with global variables
+                if (existingCheckbox) {
+                    const checkbox = existingCheckbox.querySelector("input[type='checkbox']");
+                    
+                    // Remove old listeners to avoid stacking
+                    const newCheckbox = checkbox.cloneNode(true);
+                    checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+
+                    // Set initial state based on active tab
+                    if (isOneWay) {
+                        newCheckbox.checked = oneWayFromNearby;
+                        newCheckbox.addEventListener('change', () => { oneWayFromNearby = newCheckbox.checked; });
+                    } else if (isRoundTrip) {
+                        newCheckbox.checked = roundTripFromNearby;
+                        newCheckbox.addEventListener('change', () => { roundTripFromNearby = newCheckbox.checked; });
+                    }
+                }
+
             } else {
                 if (existingCheckbox) {
                     existingCheckbox.remove();
@@ -220,8 +345,11 @@
 
             // Manage nearby checkbox injection
             const isMultiCity = document.getElementById("mstabmulticity").classList.contains("active");
+            const isOneWay = document.getElementById("mstaboneway").classList.contains("active");
+            const isRoundTrip = document.getElementById("mstabroundtrip").classList.contains("active");
+
             const toInputBox = document.querySelector(".to_input_box");
-            const existingCheckbox = document.querySelector(".to_near_checkbox");
+            let existingCheckbox = document.querySelector(".to_near_checkbox");
 
             if (!isMultiCity) {
                 if (!existingCheckbox && toInputBox) {
@@ -236,6 +364,25 @@
                           </div>
                         </div>`;
                     toInputBox.insertAdjacentHTML('afterend', checkboxHTML);
+                    existingCheckbox = document.querySelector(".to_near_checkbox");
+                }
+
+                // Sync state with global variables
+                if (existingCheckbox) {
+                    const checkbox = existingCheckbox.querySelector("input[type='checkbox']");
+                    
+                    // Remove old listeners to avoid stacking
+                    const newCheckbox = checkbox.cloneNode(true);
+                    checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+
+                    // Set initial state based on active tab
+                    if (isOneWay) {
+                        newCheckbox.checked = oneWayToNearby;
+                        newCheckbox.addEventListener('change', () => { oneWayToNearby = newCheckbox.checked; });
+                    } else if (isRoundTrip) {
+                        newCheckbox.checked = roundTripToNearby;
+                        newCheckbox.addEventListener('change', () => { roundTripToNearby = newCheckbox.checked; });
+                    }
                 }
             } else {
                 if (existingCheckbox) {
@@ -1158,6 +1305,10 @@ document
     const toShortName = document.querySelector(".owtashort").textContent;
     const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
 
+    // Get nearby airport checkbox values
+    const isFromNearby = oneWayFromNearby ? "Yes" : "No";
+    const isToNearby = oneWayToNearby ? "Yes" : "No";
+
     console.log("way :", "one way");
     console.log("formIdInput :", formIdInput);
     console.log("toIdInput :", toIdInput);
@@ -1170,6 +1321,8 @@ document
     console.log("timeStamp :", timeStamp);
     console.log("fromShortName :", fromShortName);
     console.log("toShortName :", toShortName);
+    console.log("isFromNearby :", isFromNearby);
+    console.log("isToNearby :", isToNearby);
 
     if (
       fromId &&
@@ -1194,10 +1347,12 @@ document
         toIdInput,
         fromShortName,
         toShortName,
+        isFromNearby,
+        isToNearby,
       };
 
       sessionStorage.setItem("storeData", JSON.stringify(storeData));
-      // window.location.href = `/aircraft`;
+      window.location.href = `/aircraft`;
     } else {
       alert("Please fill up the form properly");
     }
@@ -1247,6 +1402,10 @@ document
     const fromShortName = document.querySelector(".rwfashort").textContent;
     const toShortName = document.querySelector(".rwtashort").textContent;
 
+    // Get nearby airport checkbox values
+    const isFromNearby = roundTripFromNearby ? "Yes" : "No";
+    const isToNearby = roundTripToNearby ? "Yes" : "No";
+
     console.log("way :", "round trip");
     console.log("formIdInput :", formIdInput);
     console.log("toIdInput :", toIdInput);
@@ -1268,6 +1427,8 @@ document
     console.log("timeStampReturn :", timeStampReturn);
     console.log("fromShortName :", fromShortName);
     console.log("toShortName :", toShortName);
+    console.log("isFromNearby :", isFromNearby);
+    console.log("isToNearby :", isToNearby);
 
     if (
       formIdInput &&
@@ -1300,10 +1461,12 @@ document
         timeStampReturn,
         fromShortName,
         toShortName,
+        isFromNearby,
+        isToNearby,
       };
 
       sessionStorage.setItem("storeData", JSON.stringify(storeData));
-      // window.location.href = `/aircraft`;
+      window.location.href = `/aircraft`;
     } else {
       alert("Please fill up the form properly");
     }
@@ -1393,7 +1556,7 @@ document
       };
 
       sessionStorage.setItem("storeData", JSON.stringify(storeData));
-      // window.location.href = `/aircraft`;
+      window.location.href = `/aircraft`;
     } else {
       alert("Please fill up the form properly.");
     }
