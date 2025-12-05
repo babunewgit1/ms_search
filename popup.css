@@ -87,7 +87,7 @@
   height: 100vh;
   left: 0;
   top: 0px;
-  z-index: 999;
+  z-index: 992;
 }
 
 .ms_popup_box {
@@ -310,7 +310,7 @@
   height: 100vh;
   left: 0;
   top: 0;
-  z-index: 9999;
+  z-index: 995;
   display: none;
   padding-top: 25px;
 }
@@ -785,3 +785,100 @@ button.save-pax-btn {
 .paxcount {
   font-weight: normal !important;
 }
+
+/* recent search code start */
+.recent_search {
+  margin-top: 30px;
+}
+
+.recent_search_heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #cccccc;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.recent_search_heading p {
+  font-size: 15px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #03141b;
+  letter-spacing: 1.5px;
+}
+
+.recent_search_heading button {
+  display: inline-block;
+  font-size: 15px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #ff5d47;
+  letter-spacing: 1.5px;
+  padding: 0;
+  background: transparent;
+}
+
+.recent_sc_item_left {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 5px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  column-gap: 10px;
+}
+
+.recent_sc_item_left img {
+  display: block;
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.rcs_place p {
+  font-size: 15px;
+  font-weight: bold;
+  color: #1e1e1e;
+  line-height: 1.2;
+}
+
+.rcs_place:last-child p {
+  margin-top: 5px;
+}
+
+.recent_search_item {
+  margin-top: 12px;
+}
+
+.no_result {
+  font-size: 15px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #03141b;
+  letter-spacing: 1.5px;
+  text-align: center;
+  margin-top: 12px;
+}
+
+.new_flight {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 6px;
+  font-size: 16px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-weight: bold;
+}
+
+.new_flight img {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 18px;
+  margin-top: -2px;
+}
+
+/* recent search code end */

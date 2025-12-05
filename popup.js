@@ -99,62 +99,385 @@ if (isMultiCity) {
 
 // code for displaying info from session storage in card of aircraft page end
 
-
 // algolio search
 // Wait for DOM to be ready
-      document.addEventListener("DOMContentLoaded", function () {
-        // Algolia Search Implementation
-        const searchClient = algoliasearch(
-          "ZSPO7HB4MN",
-          "2a3621a18dca4f1fb757e9ddaea72440"
+document.addEventListener("DOMContentLoaded", function () {
+  // Algolia Search Implementation
+  const searchClient = algoliasearch(
+    "ZSPO7HB4MN",
+    "2a3621a18dca4f1fb757e9ddaea72440"
+  );
+  const index = searchClient.initIndex("Airports");
+
+  function displayRecentSearches(popupSelector) {
+    const popup = document.querySelector(popupSelector);
+    if (!popup) return;
+
+    // Check if Multi-city tab is active
+    const multiCityTab = document.getElementById("mstabmulticity");
+    const isMultiCity =
+      multiCityTab && multiCityTab.classList.contains("active");
+
+    let recentSearchDiv = popup.querySelector(".recent_search");
+    let signinDiv = popup.querySelector(".from_signin, .to_signin");
+
+    if (isMultiCity) {
+      if (recentSearchDiv) recentSearchDiv.remove();
+      if (signinDiv) signinDiv.remove();
+      return;
+    }
+
+    const userEmail = Cookies.get("userEmail");
+    const authToken = Cookies.get("authToken");
+    const isLoggedIn = userEmail && authToken;
+
+    // Determine context (from or to)
+    const isFrom = popup.classList.contains("from_popup");
+    const signinClass = isFrom ? "from_signin" : "to_signin";
+
+    if (!isLoggedIn) {
+      // User is LOGGED OUT
+      if (recentSearchDiv) {
+        recentSearchDiv.remove();
+      }
+
+      // Ensure Sign In exists
+      if (!signinDiv) {
+        const wrapper = popup.querySelector(
+          ".from_popup_wrapper, .to_popup_wrapper"
         );
-        const index = searchClient.initIndex("Airports");
+        if (wrapper) {
+          const newSignin = document.createElement("div");
+          newSignin.className = signinClass;
+          newSignin.innerHTML = `
+            <p>Sign in to view your recent searches</p>
+            <button type="button">SIGN IN</button>
+          `;
+          wrapper.appendChild(newSignin);
+        }
+      }
+      return;
+    }
 
-        function debounce(func, delay) {
-          let timeout;
-          return function (...args) {
-            const context = this;
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(context, args), delay);
+    // User is LOGGED IN
+    if (signinDiv) {
+      signinDiv.remove();
+    }
+
+    if (!recentSearchDiv) {
+      // Recreate Recent Search if missing
+      const inputCnt = popup.querySelector(
+        ".from_pop_inp_cnt, .to_pop_inp_cnt"
+      );
+      if (inputCnt) {
+        const newDiv = document.createElement("div");
+        newDiv.className = "recent_search";
+        newDiv.innerHTML = `
+            <div class="recent_search_heading">
+              <p>Recent Searches</p>
+              <button>CLEAR</button>
+            </div>
+            <div class="recent_search_wrapper"></div>
+      `;
+        inputCnt.insertAdjacentElement("afterend", newDiv);
+        recentSearchDiv = newDiv;
+      } else {
+        return;
+      }
+    }
+
+    const container = recentSearchDiv.querySelector(".recent_search_wrapper");
+    if (!container) return;
+
+    const recentSearches = JSON.parse(
+      localStorage.getItem("recentSearch") || "[]"
+    );
+
+    // Filter based on active tab
+    const oneWayTab = document.getElementById("mstaboneway");
+    const isOneWay = oneWayTab && oneWayTab.classList.contains("active");
+
+    const roundTripTab = document.getElementById("mstabroundtrip");
+    const isRoundTrip =
+      roundTripTab && roundTripTab.classList.contains("active");
+
+    let filteredSearches = [];
+    if (isOneWay) {
+      filteredSearches = recentSearches.filter((item) => item.way === "one way");
+    } else if (isRoundTrip) {
+      filteredSearches = recentSearches.filter(
+        (item) => item.way === "round trip"
+      );
+    } else {
+      filteredSearches = recentSearches;
+    }
+
+    if (filteredSearches.length === 0) {
+      container.innerHTML = "<p class='no_result'>No recent searches</p>";
+      return;
+    }
+
+    const formatRecentDate = (dateString) => {
+      if (!dateString) return "";
+      const [year, month, day] = dateString.split("-");
+      const date = new Date(year, month - 1, day);
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    };
+
+    const formatLocationName = (name) => {
+      if (!name) return "";
+      return name.split("(")[0].trim();
+    };
+
+    container.innerHTML = filteredSearches
+      .map((item, index) => {
+        const dateDisplay = item.returnDateAsText
+          ? `${formatRecentDate(item.dateAsText)} - ${formatRecentDate(
+              item.returnDateAsText
+            )}`
+          : `${formatRecentDate(item.dateAsText)}`;
+
+        return `
+        <div class="recent_search_item" data-index="${index}">
+          <div class="recent_sc_item_left">
+            <img src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/69299269ccb9fc2ec39c70ca_plan_icon1.png" alt="" />
+            <div class="recent_sc_item_right">
+              <div class="rcs_place">
+                <p>${formatLocationName(item.formIdInput)} (${
+          item.fromShortName
+        }) - ${formatLocationName(item.toIdInput)} (${item.toShortName})</p>
+                <p>${dateDisplay}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      })
+      .join("");
+  }
+
+  // Listen for login success event
+  window.addEventListener("loginSuccess", function () {
+    displayRecentSearches(".from_popup");
+    displayRecentSearches(".to_popup");
+  });
+
+  // Handle Recent Search Item Click
+  document.addEventListener("click", function (e) {
+    const item = e.target.closest(".recent_search_item");
+    if (item) {
+      const index = parseInt(item.getAttribute("data-index"));
+      const recentSearches = JSON.parse(
+        localStorage.getItem("recentSearch") || "[]"
+      );
+
+      // Filter based on active tab to match display logic
+      const oneWayTab = document.getElementById("mstaboneway");
+      const isOneWay = oneWayTab && oneWayTab.classList.contains("active");
+
+      const roundTripTab = document.getElementById("mstabroundtrip");
+      const isRoundTrip =
+        roundTripTab && roundTripTab.classList.contains("active");
+
+      let filteredSearches = [];
+      if (isOneWay) {
+        filteredSearches = recentSearches.filter(
+          (item) => item.way === "one way"
+        );
+      } else if (isRoundTrip) {
+        filteredSearches = recentSearches.filter(
+          (item) => item.way === "round trip"
+        );
+      } else {
+        filteredSearches = recentSearches;
+      }
+
+      const data = filteredSearches[index];
+
+      if (data) {
+        // Update Session Storage
+        sessionStorage.setItem("storeData", JSON.stringify(data));
+
+        const formatDate = (dateString) => {
+          const [year, month, day] = dateString.split("-");
+          const date = new Date(year, month - 1, day);
+          const options = {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
           };
+          return date.toLocaleDateString("en-GB", options);
+        };
+
+        if (data.way === "one way") {
+          // Populate One Way Fields
+          const owFromAirpName = document.querySelector(".owfaname");
+          const owFromAirpId = document.querySelector(".owfaid");
+          const owToAirpName = document.querySelector(".owtaname");
+          const owToAirpId = document.querySelector(".owtaid");
+          const owFormatedDate = document.querySelector(".owdateformated");
+          const owDateAsText = document.querySelector(".owdateastext");
+          const owPax = document.querySelector(".owpax");
+          const owFromAirpShortName = document.querySelector(".owfashort");
+          const owToAirpShortName = document.querySelector(".owtashort");
+
+          if (owFromAirpName && data.formIdInput) {
+            owFromAirpName.innerHTML = `<span class="light_font">${data.formIdInput}</span> <span>(${data.fromShortName})</span>`;
+          }
+          if (owFromAirpId && data.fromId)
+            owFromAirpId.textContent = data.fromId;
+          if (owFromAirpShortName && data.fromShortName)
+            owFromAirpShortName.textContent = data.fromShortName;
+
+          if (owToAirpName && data.toIdInput) {
+            owToAirpName.innerHTML = `<span class="light_font">${data.toIdInput}</span> <span>(${data.toShortName})</span>`;
+          }
+          if (owToAirpId && data.toId) owToAirpId.textContent = data.toId;
+          if (owToAirpShortName && data.toShortName)
+            owToAirpShortName.textContent = data.toShortName;
+
+          if (owDateAsText && data.dateAsText)
+            owDateAsText.textContent = data.dateAsText;
+          if (owFormatedDate && data.dateAsText) {
+            owFormatedDate.textContent = formatDate(data.dateAsText);
+          }
+
+          if (owPax && data.pax) {
+            owPax.innerHTML = `<span class="paxcount">${
+              data.pax
+            }</span> ${
+              parseInt(data.pax) > 1 ? "Passengers" : "Passenger"
+            }`;
+          }
+        } else if (data.way === "round trip") {
+          // Populate Round Trip Fields
+          const rtFromAirpName = document.querySelector(".rwfaname");
+          const rtFromAirpId = document.querySelector(".rwfaid");
+          const rtToAirpName = document.querySelector(".rwtaname");
+          const rtToAirpId = document.querySelector(".rwtaid");
+          const rtFormatedDate = document.querySelector(".rwdateformated");
+          const rtDateAsText = document.querySelector(".rwdateastext");
+          const rtReturnDate = document.querySelector(".rwreturndate");
+          const rtPax = document.querySelector(".rwpax");
+          const rwFromAirpShortName = document.querySelector(".rwfashort");
+          const rwToAirpShortName = document.querySelector(".rwtashort");
+
+          if (rtFromAirpName && data.formIdInput) {
+            rtFromAirpName.innerHTML = `<span class="light_font">${data.formIdInput}</span> <span>(${data.fromShortName})</span>`;
+          }
+          if (rtFromAirpId && data.fromId)
+            rtFromAirpId.textContent = data.fromId;
+          if (rwFromAirpShortName && data.fromShortName)
+            rwFromAirpShortName.textContent = data.fromShortName;
+
+          if (rtToAirpName && data.toIdInput) {
+            rtToAirpName.innerHTML = `<span class="light_font">${data.toIdInput}</span> <span>(${data.toShortName})</span>`;
+          }
+          if (rtToAirpId && data.toId) rtToAirpId.textContent = data.toId;
+          if (rwToAirpShortName && data.toShortName)
+            rwToAirpShortName.textContent = data.toShortName;
+
+          if (rtDateAsText && data.dateAsText)
+            rtDateAsText.textContent = data.dateAsText;
+          if (rtReturnDate && data.returnDateAsText)
+            rtReturnDate.textContent = data.returnDateAsText;
+
+          if (rtFormatedDate && data.dateAsText && data.returnDateAsText) {
+            rtFormatedDate.textContent = `${formatDate(
+              data.dateAsText
+            )} - ${formatDate(data.returnDateAsText)}`;
+          }
+
+          if (rtPax && data.pax) {
+            rtPax.innerHTML = `<span class="paxcount">${
+              data.pax
+            }</span> ${
+              parseInt(data.pax) > 1 ? "Passengers" : "Passenger"
+            }`;
+          }
         }
 
-        function escapeHTML(str) {
-          const div = document.createElement("div");
-          div.appendChild(document.createTextNode(str));
-          return div.innerHTML;
-        }
+        // Close Popups
+        const fromPopup = document.querySelector(".from_popup");
+        const toPopup = document.querySelector(".to_popup");
+        if (fromPopup) fromPopup.style.display = "none";
+        if (toPopup) toPopup.style.display = "none";
+      }
+    }
+  });
 
-        const handleInput = debounce(function (event) {
-          const input = event.target;
-          if (!input.classList.contains("algolio_input_from") && !input.classList.contains("algolio_input_to")) return;
-          const query = input.value.trim();
-          const algolioWrapper = input.closest(".algolio_wrapper");
-          
-          // Determine which results container to use
-          let resultsContainer;
-          if (input.classList.contains("algolio_input_from")) {
-            resultsContainer = document.querySelector(".pop_search-results_from");
-          } else if (input.classList.contains("algolio_input_to")) {
-            resultsContainer = document.querySelector(".pop_search-results_to");
-          }
-          
-          if (!resultsContainer) return;
+  // Clear recent searches functionality (Delegated)
+  document.addEventListener("click", function (e) {
+    if (e.target.matches(".recent_search_heading button")) {
+      localStorage.removeItem("recentSearch");
+      displayRecentSearches(".from_popup");
+      displayRecentSearches(".to_popup");
+    }
+  });
 
-          if (query.length === 0) {
-            resultsContainer.innerHTML = "";
-            return;
-          }
+  // Handle Sign In Button Click
+  document.addEventListener("click", function (e) {
+    if (e.target.matches(".from_signin button, .to_signin button")) {
+      const loginForm = document.getElementById("loginForm");
+      const authFormsWrapper = document.getElementById("authFormsWrapper");
 
-          // Perform Algolia search
-          index
-            .search(query)
-            .then(({ hits }) => {
-              if (hits.length > 0) {
-                resultsContainer.innerHTML = hits
-                  .map(
-                    (hit) =>
-                      `<div class="port" tabindex="0">
+      if (authFormsWrapper) authFormsWrapper.style.display = "block";
+      if (loginForm) loginForm.style.display = "flex";
+    }
+  });
+
+  function debounce(func, delay) {
+    let timeout;
+    return function (...args) {
+      const context = this;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(context, args), delay);
+    };
+  }
+
+  function escapeHTML(str) {
+    const div = document.createElement("div");
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
+  const handleInput = debounce(function (event) {
+    const input = event.target;
+    if (
+      !input.classList.contains("algolio_input_from") &&
+      !input.classList.contains("algolio_input_to")
+    )
+      return;
+    const query = input.value.trim();
+    const algolioWrapper = input.closest(".algolio_wrapper");
+
+    // Determine which results container to use
+    let resultsContainer;
+    if (input.classList.contains("algolio_input_from")) {
+      resultsContainer = document.querySelector(".pop_search-results_from");
+    } else if (input.classList.contains("algolio_input_to")) {
+      resultsContainer = document.querySelector(".pop_search-results_to");
+    }
+
+    if (!resultsContainer) return;
+
+    if (query.length === 0) {
+      resultsContainer.innerHTML = "";
+      return;
+    }
+
+    // Perform Algolia search
+    index
+      .search(query)
+      .then(({ hits }) => {
+        if (hits.length > 0) {
+          resultsContainer.innerHTML = hits
+            .map(
+              (hit) =>
+                `<div class="port" tabindex="0">
                   <div class="from_pop_result_block">
                     <div class="form_pop_left">
                      <img
@@ -171,128 +494,138 @@ if (isMultiCity) {
                     </div>
                   </div>
                 </div>`
-                  )
-                  .join("");
-              } else {
-                resultsContainer.innerHTML = "<p>No results found.</p>";
-              }
-            })
-            .catch((err) => {
-              console.error("Algolia search error:", err);
-              resultsContainer.innerHTML = "<p>Error fetching results.</p>";
-            });
-        }, 300);
-
-        // Function to handle click events on search results
-        function handleClick(event) {
-          const portElement = event.target.closest(".port");
-          if (portElement) {
-            const emfieldnameEl = portElement.querySelector(".emfieldname");
-            const uniqueidEl = portElement.querySelector(".uniqueid");
-            const shortcodeEl = portElement.querySelector(".shortcode");
-
-            // If any required element is missing, this might be a result from another script (like fix.js)
-            // So we simply return and let the other script handle it.
-            if (!emfieldnameEl || !uniqueidEl || !shortcodeEl) return;
-
-            const emfieldname = `<span class="light_font">${emfieldnameEl.textContent}</span> <span>(${shortcodeEl.textContent})</span>`;
-            const uniqueid = uniqueidEl.textContent;
-            const shortcode = shortcodeEl.textContent;
-
-            // Fill data based on which modal is open
-            if (window.currentClickedPopup) {
-              const nameElement = window.currentClickedPopup.querySelector(".fromairportname, .toairportname");
-              const idElement = window.currentClickedPopup.querySelector(".fromairportid, .toairportid");
-              const shortcodeElement = window.currentClickedPopup.querySelector(".fromairportshortcode, .toairportshortcode");
-
-              if (nameElement) nameElement.innerHTML = emfieldname;
-              if (idElement) idElement.textContent = uniqueid;
-              if (shortcodeElement) shortcodeElement.textContent = shortcode;
-            }
-
-            // Reset input value, clear results, and hide the appropriate modal
-            const fromPopup = document.querySelector(".from_popup");
-            const toPopup = document.querySelector(".to_popup");
-            
-            if (fromPopup && fromPopup.style.display === "block") {
-              const fromInput = document.querySelector(".algolio_input_from");
-              const fromResults = document.querySelector(".pop_search-results_from");
-              if (fromInput) fromInput.value = "";
-              if (fromResults) fromResults.innerHTML = "";
-              fromPopup.style.display = "none";
-            } else if (toPopup && toPopup.style.display === "block") {
-              const toInput = document.querySelector(".algolio_input_to");
-              const toResults = document.querySelector(".pop_search-results_to");
-              if (toInput) toInput.value = "";
-              if (toResults) toResults.innerHTML = "";
-              toPopup.style.display = "none";
-            }
-          }
+            )
+            .join("");
+        } else {
+          resultsContainer.innerHTML = "<p>No results found.</p>";
         }
+      })
+      .catch((err) => {
+        console.error("Algolia search error:", err);
+        resultsContainer.innerHTML = "<p>Error fetching results.</p>";
+      });
+  }, 300);
 
-        // Function to attach event listeners to a given .algolio_wrapper
-        function attachListeners(algolioWrapper) {
-          algolioWrapper.addEventListener("input", handleInput);
-          algolioWrapper.addEventListener("focusout", function (event) {
-            setTimeout(() => {
-              const relatedTarget = event.relatedTarget;
+  // Function to handle click events on search results
+  function handleClick(event) {
+    const portElement = event.target.closest(".port");
+    if (portElement) {
+      const emfieldnameEl = portElement.querySelector(".emfieldname");
+      const uniqueidEl = portElement.querySelector(".uniqueid");
+      const shortcodeEl = portElement.querySelector(".shortcode");
 
-              if (!relatedTarget || !algolioWrapper.contains(relatedTarget)) {
-                const allResults =
-                  algolioWrapper.querySelectorAll(".search-results");
-                allResults.forEach((resultsContainer) => {
-                  resultsContainer.innerHTML = "";
-                });
-              }
-            }, 100);
+      // If any required element is missing, this might be a result from another script (like fix.js)
+      // So we simply return and let the other script handle it.
+      if (!emfieldnameEl || !uniqueidEl || !shortcodeEl) return;
+
+      const emfieldname = `<span class="light_font">${emfieldnameEl.textContent}</span> <span>(${shortcodeEl.textContent})</span>`;
+      const uniqueid = uniqueidEl.textContent;
+      const shortcode = shortcodeEl.textContent;
+
+      // Fill data based on which modal is open
+      if (window.currentClickedPopup) {
+        const nameElement = window.currentClickedPopup.querySelector(
+          ".fromairportname, .toairportname"
+        );
+        const idElement = window.currentClickedPopup.querySelector(
+          ".fromairportid, .toairportid"
+        );
+        const shortcodeElement = window.currentClickedPopup.querySelector(
+          ".fromairportshortcode, .toairportshortcode"
+        );
+
+        if (nameElement) nameElement.innerHTML = emfieldname;
+        if (idElement) idElement.textContent = uniqueid;
+        if (shortcodeElement) shortcodeElement.textContent = shortcode;
+      }
+
+      // Reset input value, clear results, and hide the appropriate modal
+      const fromPopup = document.querySelector(".from_popup");
+      const toPopup = document.querySelector(".to_popup");
+
+      if (fromPopup && fromPopup.style.display === "block") {
+        const fromInput = document.querySelector(".algolio_input_from");
+        const fromResults = document.querySelector(".pop_search-results_from");
+        if (fromInput) fromInput.value = "";
+        if (fromResults) fromResults.innerHTML = "";
+        fromPopup.style.display = "none";
+      } else if (toPopup && toPopup.style.display === "block") {
+        const toInput = document.querySelector(".algolio_input_to");
+        const toResults = document.querySelector(".pop_search-results_to");
+        if (toInput) toInput.value = "";
+        if (toResults) toResults.innerHTML = "";
+        toPopup.style.display = "none";
+      }
+    }
+  }
+
+  // Function to attach event listeners to a given .algolio_wrapper
+  function attachListeners(algolioWrapper) {
+    algolioWrapper.addEventListener("input", handleInput);
+    algolioWrapper.addEventListener("focusout", function (event) {
+      setTimeout(() => {
+        const relatedTarget = event.relatedTarget;
+
+        if (!relatedTarget || !algolioWrapper.contains(relatedTarget)) {
+          const allResults = algolioWrapper.querySelectorAll(".search-results");
+          allResults.forEach((resultsContainer) => {
+            resultsContainer.innerHTML = "";
           });
         }
+      }, 100);
+    });
+  }
 
-        // Select all existing .algolio_wrapper elements and attach listeners
-        const algolioWrappers = document.querySelectorAll(".algolio_wrapper");
-        algolioWrappers.forEach(attachListeners);
+  // Select all existing .algolio_wrapper elements and attach listeners
+  const algolioWrappers = document.querySelectorAll(".algolio_wrapper");
+  algolioWrappers.forEach(attachListeners);
 
-        // Add click listener to the search results container (outside algolio_wrapper)
-        document.addEventListener("click", handleClick);
+  // Add click listener to the search results container (outside algolio_wrapper)
+  document.addEventListener("click", handleClick);
 
-        // Hide search results when clicking outside
-        document.addEventListener("click", function (event) {
-          const resultsContainer = document.querySelector(
-            ".pop_search-results"
-          );
-          const algolioInput = document.querySelector(".algolio_input");
+  // Hide search results when clicking outside
+  document.addEventListener("click", function (event) {
+    const resultsContainer = document.querySelector(".pop_search-results");
+    const algolioInput = document.querySelector(".algolio_input");
 
-          // Check if click is outside both input and results
-          if (resultsContainer && algolioInput) {
-            const isClickInside =
-              resultsContainer.contains(event.target) ||
-              algolioInput.contains(event.target) ||
-              event.target.classList.contains("algolio_input");
+    // Check if click is outside both input and results
+    if (resultsContainer && algolioInput) {
+      const isClickInside =
+        resultsContainer.contains(event.target) ||
+        algolioInput.contains(event.target) ||
+        event.target.classList.contains("algolio_input");
 
-            if (!isClickInside) {
-              resultsContainer.innerHTML = "";
-            }
-          }
-        });
+      if (!isClickInside) {
+        resultsContainer.innerHTML = "";
+      }
+    }
+  });
 
-        // Show from_popup when clicking on .frompopup (using event delegation)
-        document.addEventListener("click", function(e) {
-          const frompopup = e.target.closest(".frompopup");
-          if (frompopup) {
-            window.currentClickedPopup = frompopup;
-            document.querySelector(".from_popup").style.display = "block";
+  // Show from_popup when clicking on .frompopup (using event delegation)
+  document.addEventListener("click", function (e) {
+    const frompopup = e.target.closest(".frompopup");
+    if (frompopup) {
+      window.currentClickedPopup = frompopup;
+      document.querySelector(".from_popup").style.display = "block";
+      displayRecentSearches(".from_popup");
 
-            // Manage nearby checkbox injection
-            const isMultiCity = document.getElementById("mstabmulticity").classList.contains("active");
-            const isOneWay = document.getElementById("mstaboneway").classList.contains("active");
-            const isRoundTrip = document.getElementById("mstabroundtrip").classList.contains("active");
+      // Manage nearby checkbox injection
+      const isMultiCity = document
+        .getElementById("mstabmulticity")
+        .classList.contains("active");
+      const isOneWay = document
+        .getElementById("mstaboneway")
+        .classList.contains("active");
+      const isRoundTrip = document
+        .getElementById("mstabroundtrip")
+        .classList.contains("active");
 
-            const fromInputBox = document.querySelector(".from_input_box");
-            let existingCheckbox = document.querySelector(".from_near_checkbox");
+      const fromInputBox = document.querySelector(".from_input_box");
+      let existingCheckbox = document.querySelector(".from_near_checkbox");
 
-            if (!isMultiCity) {
-                if (!existingCheckbox && fromInputBox) {
-                    const checkboxHTML = `
+      if (!isMultiCity) {
+        if (!existingCheckbox && fromInputBox) {
+          const checkboxHTML = `
                         <div class="from_near_checkbox">
                           <p>Include Nearby Airports</p>
                           <div class="toggle-switcher-container">
@@ -302,58 +635,70 @@ if (isMultiCity) {
                             </label>
                           </div>
                         </div>`;
-                    fromInputBox.insertAdjacentHTML('afterend', checkboxHTML);
-                    existingCheckbox = document.querySelector(".from_near_checkbox");
-                }
+          fromInputBox.insertAdjacentHTML("afterend", checkboxHTML);
+          existingCheckbox = document.querySelector(".from_near_checkbox");
+        }
 
-                // Sync state with global variables
-                if (existingCheckbox) {
-                    const checkbox = existingCheckbox.querySelector("input[type='checkbox']");
-                    
-                    // Remove old listeners to avoid stacking
-                    const newCheckbox = checkbox.cloneNode(true);
-                    checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+        // Sync state with global variables
+        if (existingCheckbox) {
+          const checkbox = existingCheckbox.querySelector(
+            "input[type='checkbox']"
+          );
 
-                    // Set initial state based on active tab
-                    if (isOneWay) {
-                        newCheckbox.checked = oneWayFromNearby;
-                        newCheckbox.addEventListener('change', () => { oneWayFromNearby = newCheckbox.checked; });
-                    } else if (isRoundTrip) {
-                        newCheckbox.checked = roundTripFromNearby;
-                        newCheckbox.addEventListener('change', () => { roundTripFromNearby = newCheckbox.checked; });
-                    }
-                }
+          // Remove old listeners to avoid stacking
+          const newCheckbox = checkbox.cloneNode(true);
+          checkbox.parentNode.replaceChild(newCheckbox, checkbox);
 
-            } else {
-                if (existingCheckbox) {
-                    existingCheckbox.remove();
-                }
-            }
-
-            // Clear the search input
-            const algolioInput = document.querySelector(".algolio_input_from");
-            if (algolioInput) algolioInput.value = "";
+          // Set initial state based on active tab
+          if (isOneWay) {
+            newCheckbox.checked = oneWayFromNearby;
+            newCheckbox.addEventListener("change", () => {
+              oneWayFromNearby = newCheckbox.checked;
+            });
+          } else if (isRoundTrip) {
+            newCheckbox.checked = roundTripFromNearby;
+            newCheckbox.addEventListener("change", () => {
+              roundTripFromNearby = newCheckbox.checked;
+            });
           }
-        });
+        }
+      } else {
+        if (existingCheckbox) {
+          existingCheckbox.remove();
+        }
+      }
 
-        // Show to_popup when clicking on .topopup (using event delegation)
-        document.addEventListener("click", function(e) {
-          const topopup = e.target.closest(".topopup");
-          if (topopup) {
-            window.currentClickedPopup = topopup;
-            document.querySelector(".to_popup").style.display = "block";
+      // Clear the search input
+      const algolioInput = document.querySelector(".algolio_input_from");
+      if (algolioInput) algolioInput.value = "";
+    }
+  });
 
-            // Manage nearby checkbox injection
-            const isMultiCity = document.getElementById("mstabmulticity").classList.contains("active");
-            const isOneWay = document.getElementById("mstaboneway").classList.contains("active");
-            const isRoundTrip = document.getElementById("mstabroundtrip").classList.contains("active");
+  // Show to_popup when clicking on .topopup (using event delegation)
+  document.addEventListener("click", function (e) {
+    const topopup = e.target.closest(".topopup");
+    if (topopup) {
+      window.currentClickedPopup = topopup;
+      document.querySelector(".to_popup").style.display = "block";
+      displayRecentSearches(".to_popup");
 
-            const toInputBox = document.querySelector(".to_input_box");
-            let existingCheckbox = document.querySelector(".to_near_checkbox");
+      // Manage nearby checkbox injection
+      const isMultiCity = document
+        .getElementById("mstabmulticity")
+        .classList.contains("active");
+      const isOneWay = document
+        .getElementById("mstaboneway")
+        .classList.contains("active");
+      const isRoundTrip = document
+        .getElementById("mstabroundtrip")
+        .classList.contains("active");
 
-            if (!isMultiCity) {
-                if (!existingCheckbox && toInputBox) {
-                    const checkboxHTML = `
+      const toInputBox = document.querySelector(".to_input_box");
+      let existingCheckbox = document.querySelector(".to_near_checkbox");
+
+      if (!isMultiCity) {
+        if (!existingCheckbox && toInputBox) {
+          const checkboxHTML = `
                         <div class="to_near_checkbox">
                           <p>Include Nearby Airports</p>
                           <div class="toggle-switcher-container">
@@ -363,70 +708,75 @@ if (isMultiCity) {
                             </label>
                           </div>
                         </div>`;
-                    toInputBox.insertAdjacentHTML('afterend', checkboxHTML);
-                    existingCheckbox = document.querySelector(".to_near_checkbox");
-                }
+          toInputBox.insertAdjacentHTML("afterend", checkboxHTML);
+          existingCheckbox = document.querySelector(".to_near_checkbox");
+        }
 
-                // Sync state with global variables
-                if (existingCheckbox) {
-                    const checkbox = existingCheckbox.querySelector("input[type='checkbox']");
-                    
-                    // Remove old listeners to avoid stacking
-                    const newCheckbox = checkbox.cloneNode(true);
-                    checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+        // Sync state with global variables
+        if (existingCheckbox) {
+          const checkbox = existingCheckbox.querySelector(
+            "input[type='checkbox']"
+          );
 
-                    // Set initial state based on active tab
-                    if (isOneWay) {
-                        newCheckbox.checked = oneWayToNearby;
-                        newCheckbox.addEventListener('change', () => { oneWayToNearby = newCheckbox.checked; });
-                    } else if (isRoundTrip) {
-                        newCheckbox.checked = roundTripToNearby;
-                        newCheckbox.addEventListener('change', () => { roundTripToNearby = newCheckbox.checked; });
-                    }
-                }
-            } else {
-                if (existingCheckbox) {
-                    existingCheckbox.remove();
-                }
-            }
+          // Remove old listeners to avoid stacking
+          const newCheckbox = checkbox.cloneNode(true);
+          checkbox.parentNode.replaceChild(newCheckbox, checkbox);
 
-            // Clear the search input
-            const algolioInput = document.querySelector(".algolio_input_to");
-            if (algolioInput) algolioInput.value = "";
+          // Set initial state based on active tab
+          if (isOneWay) {
+            newCheckbox.checked = oneWayToNearby;
+            newCheckbox.addEventListener("change", () => {
+              oneWayToNearby = newCheckbox.checked;
+            });
+          } else if (isRoundTrip) {
+            newCheckbox.checked = roundTripToNearby;
+            newCheckbox.addEventListener("change", () => {
+              roundTripToNearby = newCheckbox.checked;
+            });
           }
-        });
+        }
+      } else {
+        if (existingCheckbox) {
+          existingCheckbox.remove();
+        }
+      }
 
-        // Show date_popup when clicking on .datepopup (using event delegation)
-        document.addEventListener("click", function(e) {
-          const datepopup = e.target.closest(".datepopup");
-          if (datepopup) {
-            window.currentClickedPopup = datepopup;
-            document.querySelector(".date_popup").style.display = "block";
-          }
-        });
+      // Clear the search input
+      const algolioInput = document.querySelector(".algolio_input_to");
+      if (algolioInput) algolioInput.value = "";
+    }
+  });
 
-        // Hide from_popup when clicking the close icon
-        document
-          .querySelector(".from_popup_header .msp_header_icon")
-          .addEventListener("click", function () {
-            document.querySelector(".from_popup").style.display = "none";
-          });
+  // Show date_popup when clicking on .datepopup (using event delegation)
+  document.addEventListener("click", function (e) {
+    const datepopup = e.target.closest(".datepopup");
+    if (datepopup) {
+      window.currentClickedPopup = datepopup;
+      document.querySelector(".date_popup").style.display = "block";
+    }
+  });
 
-        // Hide to_popup when clicking the close icon
-        document
-          .querySelector(".to_popup_header .msp_header_icon")
-          .addEventListener("click", function () {
-            document.querySelector(".to_popup").style.display = "none";
-          });
+  // Hide from_popup when clicking the close icon
+  document
+    .querySelector(".from_popup_header .msp_header_icon")
+    .addEventListener("click", function () {
+      document.querySelector(".from_popup").style.display = "none";
+    });
 
-        // Hide date_popup when clicking the close icon
-        document
-          .querySelector(".date_popup_header .msp_header_icon")
-          .addEventListener("click", function () {
-            document.querySelector(".date_popup").style.display = "none";
-          });
-      }); // End DOMContentLoaded
+  // Hide to_popup when clicking the close icon
+  document
+    .querySelector(".to_popup_header .msp_header_icon")
+    .addEventListener("click", function () {
+      document.querySelector(".to_popup").style.display = "none";
+    });
 
+  // Hide date_popup when clicking the close icon
+  document
+    .querySelector(".date_popup_header .msp_header_icon")
+    .addEventListener("click", function () {
+      document.querySelector(".date_popup").style.display = "none";
+    });
+}); // End DOMContentLoaded
 
 // popup display code
 const popupTigger = document.querySelector(".search_mobile_wrapper");
@@ -435,48 +785,45 @@ const popBoxOne = document.querySelector(".search_mobile_popup");
 if (popupTigger && popBoxOne) {
   const crossPopup = popBoxOne.querySelector(".msp_header_icon");
 
-  popupTigger.addEventListener("click", function(){
-     popBoxOne.style.display="block";
-     document.querySelector("body").style.overflow = "hidden";
-  })
+  popupTigger.addEventListener("click", function () {
+    popBoxOne.style.display = "block";
+    document.querySelector("body").style.overflow = "hidden";
+  });
 
   if (crossPopup) {
-    crossPopup.addEventListener("click", function(){
-       popBoxOne.style.display = "none";
-       document.querySelector("body").style.overflow = "auto";
-    })
+    crossPopup.addEventListener("click", function () {
+      popBoxOne.style.display = "none";
+      document.querySelector("body").style.overflow = "auto";
+    });
   }
 }
 
-  
-  
-  // Select all tab buttons and content boxes
-  const tabItems = document.querySelectorAll(".ms_tab_item");
-  const tabContents = document.querySelectorAll(".ms_tab_cnt_item");
+// Select all tab buttons and content boxes
+const tabItems = document.querySelectorAll(".ms_tab_item");
+const tabContents = document.querySelectorAll(".ms_tab_cnt_item");
 
-  tabItems.forEach(tab => {
-    tab.addEventListener("click", () => {
-      const targetId = tab.getAttribute("data-item");
+tabItems.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const targetId = tab.getAttribute("data-item");
 
-      // Remove active from all tabs
-      tabItems.forEach(item => item.classList.remove("active"));
+    // Remove active from all tabs
+    tabItems.forEach((item) => item.classList.remove("active"));
 
-      // Remove active from all tab contents
-      tabContents.forEach(content => content.classList.remove("active"));
+    // Remove active from all tab contents
+    tabContents.forEach((content) => content.classList.remove("active"));
 
-      // Add active to clicked tab
-      tab.classList.add("active");
+    // Add active to clicked tab
+    tab.classList.add("active");
 
-      // Add active to matching content tab
-      document.getElementById(targetId).classList.add("active");
+    // Add active to matching content tab
+    document.getElementById(targetId).classList.add("active");
 
-      // Reset PAX counters to 0 when switching tabs
-      document.querySelectorAll(".pax_count").forEach(span => {
-        span.textContent = "0";
-      });
+    // Reset PAX counters to 0 when switching tabs
+    document.querySelectorAll(".pax_count").forEach((span) => {
+      span.textContent = "0";
     });
   });
-
+});
 
 //filling data from session storage
 const getsessionDateSM = sessionStorage.getItem("storeData");
@@ -488,19 +835,23 @@ if (!getstoredDataSM) {
 
 // Set active tab based on session storage way
 if (getstoredDataSM.way === "one way") {
-  tabItems.forEach(item => item.classList.remove("active"));
-  tabContents.forEach(content => content.classList.remove("active"));
+  tabItems.forEach((item) => item.classList.remove("active"));
+  tabContents.forEach((content) => content.classList.remove("active"));
   document.querySelector('[data-item="mstaboneway"]').classList.add("active");
   document.getElementById("mstaboneway").classList.add("active");
 } else if (getstoredDataSM.way === "round trip") {
-  tabItems.forEach(item => item.classList.remove("active"));
-  tabContents.forEach(content => content.classList.remove("active"));
-  document.querySelector('[data-item="mstabroundtrip"]').classList.add("active");
+  tabItems.forEach((item) => item.classList.remove("active"));
+  tabContents.forEach((content) => content.classList.remove("active"));
+  document
+    .querySelector('[data-item="mstabroundtrip"]')
+    .classList.add("active");
   document.getElementById("mstabroundtrip").classList.add("active");
 } else if (getstoredDataSM.way === "multi-city") {
-  tabItems.forEach(item => item.classList.remove("active"));
-  tabContents.forEach(content => content.classList.remove("active"));
-  document.querySelector('[data-item="mstabmulticity"]').classList.add("active");
+  tabItems.forEach((item) => item.classList.remove("active"));
+  tabContents.forEach((content) => content.classList.remove("active"));
+  document
+    .querySelector('[data-item="mstabmulticity"]')
+    .classList.add("active");
   document.getElementById("mstabmulticity").classList.add("active");
 }
 
@@ -610,21 +961,21 @@ function fillInputRound() {
   }
 
   if (getstoredDataSM.pax) {
-    rtPax.innerHTML = `<span class="paxcount">${
-      getstoredDataSM.pax
-    }</span> ${parseInt(getstoredDataSM.pax) > 1 ? "Passengers" : "Passenger"}`;
+    rtPax.innerHTML = `<span class="paxcount">${getstoredDataSM.pax}</span> ${
+      parseInt(getstoredDataSM.pax) > 1 ? "Passengers" : "Passenger"
+    }`;
   }
 }
 
-
 // for multicity
 if (getstoredDataSM.way === "multi-city") {
-  const isAnyArrayEmpty = 
+  const isAnyArrayEmpty =
     (getstoredDataSM.fromId && getstoredDataSM.fromId.length === 0) ||
     (getstoredDataSM.toId && getstoredDataSM.toId.length === 0) ||
     (getstoredDataSM.formIdInput && getstoredDataSM.formIdInput.length === 0) ||
     (getstoredDataSM.toIdInput && getstoredDataSM.toIdInput.length === 0) ||
-    (getstoredDataSM.fromShortName && getstoredDataSM.fromShortName.length === 0) ||
+    (getstoredDataSM.fromShortName &&
+      getstoredDataSM.fromShortName.length === 0) ||
     (getstoredDataSM.toShortName && getstoredDataSM.toShortName.length === 0) ||
     (getstoredDataSM.dateAsText && getstoredDataSM.dateAsText.length === 0) ||
     (getstoredDataSM.pax && getstoredDataSM.pax.length === 0);
@@ -632,7 +983,8 @@ if (getstoredDataSM.way === "multi-city") {
   if (isAnyArrayEmpty) {
     const searchWrapper = document.querySelector(".search_mobile_wrapper");
     if (searchWrapper) {
-      searchWrapper.innerHTML = "<p>Please add new flight and search</p>";
+      searchWrapper.innerHTML =
+        "<p  class='new_flight'> <img src='https://cdn.prod.website-files.com/6713759f858863c516dbaa19/692c1f7902828a7c8eb67bab_plus_icon.png' alt='icon' /> Please add new flight</p>";
     }
   }
   for (let i = 0; i < getstoredDataSM.fromId.length; i++) {
@@ -740,19 +1092,21 @@ if (addNewBtn) {
     const multicityBox = document.querySelector(".multicity_box");
     const currentFlights = multicityBox.querySelectorAll(".multicity_wrapping");
     const predefineBlock = document.querySelector(".multicity_predefine");
-    const isPredefineVisible = predefineBlock && predefineBlock.style.display !== "none";
-    
+    const isPredefineVisible =
+      predefineBlock && predefineBlock.style.display !== "none";
+
     if (currentFlights.length >= 10) {
       alert("You can not add more flights");
       return;
     }
-    
+
     // Calculate next flight number based on existing flights
     let nextFlightNumber;
     if (currentFlights.length > 0) {
       // Find the highest flight number from existing flights
-      const flightNumbers = Array.from(currentFlights).map(flight => {
-        const flightText = flight.querySelector('.flight_heading p').textContent;
+      const flightNumbers = Array.from(currentFlights).map((flight) => {
+        const flightText =
+          flight.querySelector(".flight_heading p").textContent;
         const match = flightText.match(/Flight (\d+)/);
         return match ? parseInt(match[1]) : 0;
       });
@@ -837,7 +1191,8 @@ if (addNewBtn) {
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("remove-flight")) {
     const flightBlock = e.target.closest(".multicity_wrapping");
-    const isFromStorage = flightBlock.getAttribute("data-from-storage") === "true";
+    const isFromStorage =
+      flightBlock.getAttribute("data-from-storage") === "true";
     const flightIndex = parseInt(flightBlock.getAttribute("data-flight-index"));
 
     if (isFromStorage && !isNaN(flightIndex)) {
@@ -857,7 +1212,7 @@ document.addEventListener("click", (e) => {
 
         sessionStorage.setItem("storeData", JSON.stringify(storedData));
 
-        const isAnyArrayEmpty = 
+        const isAnyArrayEmpty =
           (storedData.fromId && storedData.fromId.length === 0) ||
           (storedData.toId && storedData.toId.length === 0) ||
           (storedData.formIdInput && storedData.formIdInput.length === 0) ||
@@ -868,9 +1223,12 @@ document.addEventListener("click", (e) => {
           (storedData.pax && storedData.pax.length === 0);
 
         if (isAnyArrayEmpty) {
-          const searchWrapper = document.querySelector(".search_mobile_wrapper");
+          const searchWrapper = document.querySelector(
+            ".search_mobile_wrapper"
+          );
           if (searchWrapper) {
-            searchWrapper.innerHTML = "<p>Please add new flight and search</p>";
+            searchWrapper.innerHTML =
+              "<p class='new_flight'> <img src='https://cdn.prod.website-files.com/6713759f858863c516dbaa19/692c1f7902828a7c8eb67bab_plus_icon.png' alt='icon' /> Please add new flight</p>";
           }
         }
       }
@@ -885,7 +1243,7 @@ document.addEventListener("click", (e) => {
     allFlights.forEach((flight, index) => {
       const flightHeading = flight.querySelector(".flight_heading p");
       flightHeading.textContent = `Flight ${index + 1}`;
-      
+
       // Update data-flight-index for storage-based flights
       if (flight.getAttribute("data-from-storage") === "true") {
         flight.setAttribute("data-flight-index", index);
@@ -905,25 +1263,40 @@ document.addEventListener("DOMContentLoaded", function () {
   let date = new Date();
   let currYear = date.getFullYear();
   let currMonth = date.getMonth();
-  
+
   // Selection state
   let startDate = null; // { day, month, year }
-  let endDate = null;   // { day, month, year }
-  
+  let endDate = null; // { day, month, year }
+
   const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   // Helper to compare dates
-  const isSameDate = (d1, d2) => d1 && d2 && d1.day === d2.day && d1.month === d2.month && d1.year === d2.year;
+  const isSameDate = (d1, d2) =>
+    d1 &&
+    d2 &&
+    d1.day === d2.day &&
+    d1.month === d2.month &&
+    d1.year === d2.year;
   const isBefore = (d1, d2) => {
     if (d1.year !== d2.year) return d1.year < d2.year;
     if (d1.month !== d2.month) return d1.month < d2.month;
     return d1.day < d2.day;
   };
   const isAfter = (d1, d2) => isBefore(d2, d1);
-  
+
   const getSelectionMode = () => {
     // Check tab button
     const activeTab = document.querySelector(".ms_tab_item.active");
@@ -933,7 +1306,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Check tab content (fallback)
     const roundTripContent = document.getElementById("mstabroundtrip");
     if (roundTripContent && roundTripContent.classList.contains("active")) {
-        return "range";
+      return "range";
     }
     return "single";
   };
@@ -942,7 +1315,11 @@ document.addEventListener("DOMContentLoaded", function () {
     let firstDayofMonth = new Date(currYear, currMonth, 1).getDay();
     let lastDateofMonth = new Date(currYear, currMonth + 1, 0).getDate();
     let lastDayofLastMonth = new Date(currYear, currMonth, 0).getDate();
-    let lastDayofMonth = new Date(currYear, currMonth, lastDateofMonth).getDay();
+    let lastDayofMonth = new Date(
+      currYear,
+      currMonth,
+      lastDateofMonth
+    ).getDay();
 
     let liTag = "";
 
@@ -958,37 +1335,46 @@ document.addEventListener("DOMContentLoaded", function () {
       const day = lastDayofLastMonth - i + 1;
       const dateToCheck = new Date(prevMonthYear, prevMonth, day);
       const isPast = dateToCheck < today;
-      
+
       let className = "prev-month-day";
       let clickEvent = "";
-      
+
       if (isPast) {
         className += " disabled";
       } else {
-        const currentDayObj = { day: day, month: prevMonth, year: prevMonthYear };
-        
+        const currentDayObj = {
+          day: day,
+          month: prevMonth,
+          year: prevMonthYear,
+        };
+
         if (isSameDate(currentDayObj, startDate)) {
           className += " active";
           if (endDate) className += " range-start";
         } else if (isSameDate(currentDayObj, endDate)) {
           className += " active range-end";
-        } else if (startDate && endDate && isAfter(currentDayObj, startDate) && isBefore(currentDayObj, endDate)) {
+        } else if (
+          startDate &&
+          endDate &&
+          isAfter(currentDayObj, startDate) &&
+          isBefore(currentDayObj, endDate)
+        ) {
           className += " in-range";
         }
-        
+
         clickEvent = `data-day="${day}" data-month="${prevMonth}" data-year="${prevMonthYear}"`;
       }
-      
+
       liTag += `<li class="${className}" ${clickEvent}>${day}</li>`;
     }
 
     for (let i = 1; i <= lastDateofMonth; i++) {
       const dateToCheck = new Date(currYear, currMonth, i);
       const isPast = dateToCheck < today;
-      
+
       let className = "";
       let clickEvent = "";
-      
+
       const currentDayObj = { day: i, month: currMonth, year: currYear };
 
       if (isPast) {
@@ -1000,10 +1386,15 @@ document.addEventListener("DOMContentLoaded", function () {
           if (endDate) className += " range-start";
         } else if (isSameDate(currentDayObj, endDate)) {
           className += " active range-end";
-        } else if (startDate && endDate && isAfter(currentDayObj, startDate) && isBefore(currentDayObj, endDate)) {
+        } else if (
+          startDate &&
+          endDate &&
+          isAfter(currentDayObj, startDate) &&
+          isBefore(currentDayObj, endDate)
+        ) {
           className += " in-range";
         }
-        
+
         clickEvent = `data-day="${i}" data-month="${currMonth}" data-year="${currYear}"`;
       }
 
@@ -1018,43 +1409,52 @@ document.addEventListener("DOMContentLoaded", function () {
       const day = i - lastDayofMonth + 1;
       const dateToCheck = new Date(nextMonthYear, nextMonth, day);
       const isPast = dateToCheck < today;
-      
+
       let className = "next-month-day";
       let clickEvent = "";
-      
+
       const currentDayObj = { day: day, month: nextMonth, year: nextMonthYear };
 
       if (isPast) {
         className = "disabled";
       } else {
-         if (isSameDate(currentDayObj, startDate)) {
+        if (isSameDate(currentDayObj, startDate)) {
           className += " active";
           if (endDate) className += " range-start";
         } else if (isSameDate(currentDayObj, endDate)) {
           className += " active range-end";
-        } else if (startDate && endDate && isAfter(currentDayObj, startDate) && isBefore(currentDayObj, endDate)) {
+        } else if (
+          startDate &&
+          endDate &&
+          isAfter(currentDayObj, startDate) &&
+          isBefore(currentDayObj, endDate)
+        ) {
           className += " in-range";
         }
-        
+
         clickEvent = `data-day="${day}" data-month="${nextMonth}" data-year="${nextMonthYear}"`;
       }
 
       liTag += `<li class="${className}" ${clickEvent}>${day}</li>`;
     }
 
-    currentDateText.innerText = `${months[currMonth].toUpperCase()}, ${currYear}`;
+    currentDateText.innerText = `${months[
+      currMonth
+    ].toUpperCase()}, ${currYear}`;
     daysTag.innerHTML = liTag;
-    
+
     // Attach click listeners to new elements
-    document.querySelectorAll(".days-grid li:not(.inactive):not(.disabled)").forEach(li => {
-      li.addEventListener("click", () => {
-        const d = parseInt(li.getAttribute("data-day"));
-        const m = parseInt(li.getAttribute("data-month"));
-        const y = parseInt(li.getAttribute("data-year"));
-        handleDateClick(d, m, y);
+    document
+      .querySelectorAll(".days-grid li:not(.inactive):not(.disabled)")
+      .forEach((li) => {
+        li.addEventListener("click", () => {
+          const d = parseInt(li.getAttribute("data-day"));
+          const m = parseInt(li.getAttribute("data-month"));
+          const y = parseInt(li.getAttribute("data-year"));
+          handleDateClick(d, m, y);
+        });
       });
-    });
-    
+
     updateDisplay();
   };
 
@@ -1077,7 +1477,7 @@ document.addEventListener("DOMContentLoaded", function () {
           // Clicked before start, so it becomes new start
           startDate = clickedDate;
         } else if (isSameDate(clickedDate, startDate)) {
-            // Clicked same date, do nothing or toggle? Let's keep it as start
+          // Clicked same date, do nothing or toggle? Let's keep it as start
         } else {
           endDate = clickedDate;
         }
@@ -1088,37 +1488,46 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const updateDisplay = () => {
     const returnDateDisplay = document.querySelector(".return-date-display");
-    const displayReturnDateText = document.getElementById("display-return-date-text");
+    const displayReturnDateText = document.getElementById(
+      "display-return-date-text"
+    );
     const mode = getSelectionMode();
 
     if (mode === "range") {
-        if (returnDateDisplay) {
-            returnDateDisplay.style.display = "block";
-            // Ensure it's visible even if inline style says none
-            returnDateDisplay.style.removeProperty("display");
-            returnDateDisplay.style.display = "block"; 
-        }
+      if (returnDateDisplay) {
+        returnDateDisplay.style.display = "block";
+        // Ensure it's visible even if inline style says none
+        returnDateDisplay.style.removeProperty("display");
+        returnDateDisplay.style.display = "block";
+      }
     } else {
-        if (returnDateDisplay) returnDateDisplay.style.display = "none";
+      if (returnDateDisplay) returnDateDisplay.style.display = "none";
     }
 
     const formatDate = (d) => {
       const dateObj = new Date(d.year, d.month, d.day);
-      return dateObj.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+      return dateObj.toLocaleDateString("en-GB", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      });
     };
 
     if (!startDate) {
       displayDateText.innerText = "Select a date";
-      if (displayReturnDateText) displayReturnDateText.innerText = "Select a date";
+      if (displayReturnDateText)
+        displayReturnDateText.innerText = "Select a date";
       return;
     }
 
     displayDateText.innerText = formatDate(startDate);
 
     if (endDate) {
-      if (displayReturnDateText) displayReturnDateText.innerText = formatDate(endDate);
+      if (displayReturnDateText)
+        displayReturnDateText.innerText = formatDate(endDate);
     } else {
-      if (displayReturnDateText) displayReturnDateText.innerText = "Select a date";
+      if (displayReturnDateText)
+        displayReturnDateText.innerText = "Select a date";
     }
   };
 
@@ -1136,157 +1545,205 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Initial render
   renderCalendar();
-  
+
   // Handle Save
   saveBtn.addEventListener("click", () => {
     if (!startDate) return;
-    
+
     const formatDateStr = (d) => {
-        const dateObj = new Date(d.year, d.month, d.day);
-        return dateObj.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+      const dateObj = new Date(d.year, d.month, d.day);
+      return dateObj.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
     };
 
     const formatDateText = (d) => {
-        const dateObj = new Date(d.year, d.month, d.day);
-        const year = dateObj.getFullYear();
-        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const day = String(dateObj.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+      const dateObj = new Date(d.year, d.month, d.day);
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const day = String(dateObj.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
     };
 
     if (window.currentClickedPopup) {
-        const container = window.currentClickedPopup;
-        
-        // One Way / Multi-city
-        const dateFormatted = container.querySelector(".owdateformated, .mcdateformated");
-        const dateAsText = container.querySelector(".owdateastext, .mcdateastext");
-        
-        // Round Trip
-        const rwDateFormatted = container.querySelector(".rwdateformated");
-        const rwDateAsText = container.querySelector(".rwdateastext");
-        const rwReturnDate = container.querySelector(".rwreturndate");
-        
-        if (getSelectionMode() === "range") {
-            if (rwDateFormatted) {
-                if (endDate) {
-                    rwDateFormatted.textContent = `${formatDateStr(startDate)} - ${formatDateStr(endDate)}`;
-                } else {
-                    rwDateFormatted.textContent = formatDateStr(startDate);
-                }
-            }
-            if (rwDateAsText) rwDateAsText.textContent = formatDateText(startDate);
-            if (rwReturnDate && endDate) rwReturnDate.textContent = formatDateText(endDate);
-        } else {
-            if (dateFormatted) dateFormatted.textContent = formatDateStr(startDate);
-            if (dateAsText) dateAsText.textContent = formatDateText(startDate);
-            
-            // Also handle round trip if it was somehow in single mode or just updating start
-             if (rwDateFormatted) rwDateFormatted.textContent = formatDateStr(startDate);
-             if (rwDateAsText) rwDateAsText.textContent = formatDateText(startDate);
+      const container = window.currentClickedPopup;
+
+      // One Way / Multi-city
+      const dateFormatted = container.querySelector(
+        ".owdateformated, .mcdateformated"
+      );
+      const dateAsText = container.querySelector(
+        ".owdateastext, .mcdateastext"
+      );
+
+      // Round Trip
+      const rwDateFormatted = container.querySelector(".rwdateformated");
+      const rwDateAsText = container.querySelector(".rwdateastext");
+      const rwReturnDate = container.querySelector(".rwreturndate");
+
+      if (getSelectionMode() === "range") {
+        if (rwDateFormatted) {
+          if (endDate) {
+            rwDateFormatted.textContent = `${formatDateStr(
+              startDate
+            )} - ${formatDateStr(endDate)}`;
+          } else {
+            rwDateFormatted.textContent = formatDateStr(startDate);
+          }
         }
+        if (rwDateAsText) rwDateAsText.textContent = formatDateText(startDate);
+        if (rwReturnDate && endDate)
+          rwReturnDate.textContent = formatDateText(endDate);
+      } else {
+        if (dateFormatted) dateFormatted.textContent = formatDateStr(startDate);
+        if (dateAsText) dateAsText.textContent = formatDateText(startDate);
+
+        // Also handle round trip if it was somehow in single mode or just updating start
+        if (rwDateFormatted)
+          rwDateFormatted.textContent = formatDateStr(startDate);
+        if (rwDateAsText) rwDateAsText.textContent = formatDateText(startDate);
+      }
     }
-    
+
     document.querySelector(".date_popup").style.display = "none";
   });
-  
+
   // Reset calendar when opening popup
-  document.addEventListener("click", function(e) {
-      if (e.target.closest(".datepopup")) {
-          // Reset to current date
-          const now = new Date();
-          startDate = { day: now.getDate(), month: now.getMonth(), year: now.getFullYear() };
-          endDate = null;
-          
-          // Reset view to current month
-          currMonth = now.getMonth();
-          currYear = now.getFullYear();
-          
-          renderCalendar();
-      }
+  document.addEventListener("click", function (e) {
+    if (e.target.closest(".datepopup")) {
+      // Reset to current date
+      const now = new Date();
+      startDate = {
+        day: now.getDate(),
+        month: now.getMonth(),
+        year: now.getFullYear(),
+      };
+      endDate = null;
+
+      // Reset view to current month
+      currMonth = now.getMonth();
+      currYear = now.getFullYear();
+
+      renderCalendar();
+    }
   });
 });
 
 // PAX Popup Logic
-(function() {
-    const paxPopup = document.querySelector(".pax_popup");
-    const paxPopupClose = document.querySelector(".pax_popup_header .msp_header_icon");
-    const savePaxBtn = document.querySelector(".save-pax-btn");
-    let currentPaxElement = null;
+(function () {
+  const paxPopup = document.querySelector(".pax_popup");
+  const paxPopupClose = document.querySelector(
+    ".pax_popup_header .msp_header_icon"
+  );
+  const savePaxBtn = document.querySelector(".save-pax-btn");
+  let currentPaxElement = null;
 
-    // Open PAX Popup (Event Delegation)
-    document.addEventListener("click", function(e) {
-       // Check if the clicked element is inside a pax container
-       const paxItem = e.target.closest(".mspop_cnt_item");
-       
-       if (paxItem) {
-           const paxTextElement = paxItem.querySelector(".owpax, .rwpax, .mcpax");
-           
-           if (paxTextElement) {
-               currentPaxElement = paxTextElement;
-               
-               if (paxPopup) paxPopup.style.display = "block";
-           }
-       }
+  // Open PAX Popup (Event Delegation)
+  document.addEventListener("click", function (e) {
+    // Check if the clicked element is inside a pax container
+    const paxItem = e.target.closest(".mspop_cnt_item");
+
+    if (paxItem) {
+      const paxTextElement = paxItem.querySelector(".owpax, .rwpax, .mcpax");
+
+      if (paxTextElement) {
+        currentPaxElement = paxTextElement;
+
+        if (paxPopup) paxPopup.style.display = "block";
+      }
+    }
+  });
+
+  // Close PAX Popup
+  if (paxPopupClose) {
+    paxPopupClose.addEventListener("click", function () {
+      if (paxPopup) paxPopup.style.display = "none";
+    });
+  }
+
+  // Handle Counters
+  const counters = document.querySelectorAll(".pax_counter");
+  counters.forEach((counter) => {
+    const minusBtn = counter.querySelector(".pax_minus");
+    const plusBtn = counter.querySelector(".pax_plus");
+    const countSpan = counter.querySelector(".pax_count");
+
+    minusBtn.addEventListener("click", function () {
+      let count = parseInt(countSpan.textContent);
+      if (count > 0) {
+        count--;
+        countSpan.textContent = count;
+      }
     });
 
-    // Close PAX Popup
-    if (paxPopupClose) {
-        paxPopupClose.addEventListener("click", function() {
-            if (paxPopup) paxPopup.style.display = "none";
-        });
-    }
-
-    // Handle Counters
-    const counters = document.querySelectorAll(".pax_counter");
-    counters.forEach(counter => {
-        const minusBtn = counter.querySelector(".pax_minus");
-        const plusBtn = counter.querySelector(".pax_plus");
-        const countSpan = counter.querySelector(".pax_count");
-
-        minusBtn.addEventListener("click", function() {
-            let count = parseInt(countSpan.textContent);
-            if (count > 0) {
-                count--;
-                countSpan.textContent = count;
-            }
-        });
-
-        plusBtn.addEventListener("click", function() {
-            let count = parseInt(countSpan.textContent);
-            count++;
-            countSpan.textContent = count;
-        });
+    plusBtn.addEventListener("click", function () {
+      let count = parseInt(countSpan.textContent);
+      count++;
+      countSpan.textContent = count;
     });
+  });
 
-    // Save Passengers
-    if (savePaxBtn) {
-        savePaxBtn.addEventListener("click", function() {
-            let totalPax = 0;
-            
-            document.querySelectorAll(".pax_count").forEach(span => {
-                const count = parseInt(span.textContent);
-                totalPax += count;
-            });
+  // Save Passengers
+  if (savePaxBtn) {
+    savePaxBtn.addEventListener("click", function () {
+      let totalPax = 0;
 
-            if (totalPax === 0) {
-                alert("add atletast 1 passenger");
-                return;
-            }
+      document.querySelectorAll(".pax_count").forEach((span) => {
+        const count = parseInt(span.textContent);
+        totalPax += count;
+      });
 
-            if (currentPaxElement) {
-                let text = `<span class="paxcount">${totalPax}</span> ${
-                  totalPax > 1 ? "Passengers" : "Passenger"
-                }`;
-                currentPaxElement.innerHTML = text;
-            }
+      if (totalPax === 0) {
+        alert("add atletast 1 passenger");
+        return;
+      }
 
-            if (paxPopup) paxPopup.style.display = "none";
-        });
-    }
+      if (currentPaxElement) {
+        let text = `<span class="paxcount">${totalPax}</span> ${
+          totalPax > 1 ? "Passengers" : "Passenger"
+        }`;
+        currentPaxElement.innerHTML = text;
+      }
+
+      if (paxPopup) paxPopup.style.display = "none";
+    });
+  }
 })();
 
-
 // update session storage and display new search result
+
+function saveRecentSearch(data) {
+  let recentSearches = JSON.parse(localStorage.getItem("recentSearch") || "[]");
+  recentSearches.unshift(data);
+  if (recentSearches.length > 5) {
+    recentSearches = recentSearches.slice(0, 5);
+  }
+  localStorage.setItem("recentSearch", JSON.stringify(recentSearches));
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  try {
+    const userEmail = Cookies.get("userEmail");
+    const authToken = Cookies.get("authToken");
+
+    if (userEmail && authToken) {
+      // Remove signin prompts if user is logged in
+      const fromSignin = document.querySelector(".from_signin");
+      if (fromSignin) fromSignin.remove();
+
+      const toSignin = document.querySelector(".to_signin");
+      if (toSignin) toSignin.remove();
+      
+      // print all info with session storage with dom
+
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 // ✅ One Way Submission
 document
   .querySelector(".oneway_search_btn")
@@ -1294,7 +1751,9 @@ document
     const formIdInput = document.querySelector(
       ".owfaname span.light_font"
     ).textContent;
-    const toIdInput = document.querySelector(".owtaname span.light_font").textContent;
+    const toIdInput = document.querySelector(
+      ".owtaname span.light_font"
+    ).textContent;
     const fromId = document.querySelector(".owfaid").textContent;
     const toId = document.querySelector(".owtaid").textContent;
     const dateAsText = document.querySelector(".owdateastext").textContent;
@@ -1351,6 +1810,7 @@ document
         isToNearby,
       };
 
+      saveRecentSearch(storeData);
       sessionStorage.setItem("storeData", JSON.stringify(storeData));
       window.location.href = `/aircraft`;
     } else {
@@ -1358,12 +1818,13 @@ document
     }
   });
 
-
-  // ✅ Round Trip Submission
+// ✅ Round Trip Submission
 document
   .querySelector(".round_search_btn")
   .addEventListener("click", function () {
-    const formIdInput = document.querySelector(".rwfaname span.light_font").textContent;
+    const formIdInput = document.querySelector(
+      ".rwfaname span.light_font"
+    ).textContent;
     const toIdInput = document.querySelector(
       ".rwtaname span.light_font"
     ).textContent;
@@ -1382,7 +1843,8 @@ document
     const returnToId = document.querySelector(".rwfaid").textContent;
 
     const dateAsText = document.querySelector(".rwdateastext").textContent;
-    const returnDateAsText = document.querySelector(".rwreturndate").textContent;
+    const returnDateAsText =
+      document.querySelector(".rwreturndate").textContent;
 
     const timeAsText = "00:00:00";
     const timeAsTextReturn = "00:00:00";
@@ -1465,13 +1927,13 @@ document
         isToNearby,
       };
 
+      saveRecentSearch(storeData);
       sessionStorage.setItem("storeData", JSON.stringify(storeData));
       window.location.href = `/aircraft`;
     } else {
       alert("Please fill up the form properly");
     }
   });
-
 
 // ✅ Multi-City Submission
 document
@@ -1480,9 +1942,11 @@ document
     const containers = [];
     const predefine = document.querySelector(".multicity_predefine");
     if (predefine && predefine.offsetParent !== null) {
-        containers.push(predefine);
+      containers.push(predefine);
     }
-    document.querySelectorAll(".multicity_wrapping").forEach(el => containers.push(el));
+    document
+      .querySelectorAll(".multicity_wrapping")
+      .forEach((el) => containers.push(el));
 
     let storeFormPort = [],
       storeToPort = [],
@@ -1495,35 +1959,48 @@ document
     let storeFromShortName = [],
       storeToShortName = [];
     let multiUnixTime = [];
-    
+
     let isValid = true;
     const timeAsText = "00:00:00";
 
     containers.forEach((container) => {
-        const fromPort = container.querySelector(".mcfaname span.light_font")?.textContent;
-        const toPort = container.querySelector(".mctaname span.light_font")?.textContent;
-        const fromId = container.querySelector(".mcfaid")?.textContent;
-        const toId = container.querySelector(".mctaid")?.textContent;
-        const dateText = container.querySelector(".mcdateastext")?.textContent;
-        const pax = container.querySelector(".paxcount")?.textContent;
-        const fromShort = container.querySelector(".mcfashort")?.textContent;
-        const toShort = container.querySelector(".mctashort")?.textContent;
+      const fromPort = container.querySelector(
+        ".mcfaname span.light_font"
+      )?.textContent;
+      const toPort = container.querySelector(
+        ".mctaname span.light_font"
+      )?.textContent;
+      const fromId = container.querySelector(".mcfaid")?.textContent;
+      const toId = container.querySelector(".mctaid")?.textContent;
+      const dateText = container.querySelector(".mcdateastext")?.textContent;
+      const pax = container.querySelector(".paxcount")?.textContent;
+      const fromShort = container.querySelector(".mcfashort")?.textContent;
+      const toShort = container.querySelector(".mctashort")?.textContent;
 
-        if (fromPort && toPort && fromId && toId && dateText && pax && fromShort && toShort) {
-            storeFormPort.push(fromPort);
-            storeToPort.push(toPort);
-            storeFormId.push(fromId);
-            storeToId.push(toId);
-            storeDate.push(dateText);
-            storeAppDate.push(dateText);
-            storeTime.push(timeAsText);
-            storePax.push(pax);
-            storeFromShortName.push(fromShort);
-            storeToShortName.push(toShort);
-            multiUnixTime.push(getUnixTimestamp(dateText, timeAsText));
-        } else {
-            isValid = false;
-        }
+      if (
+        fromPort &&
+        toPort &&
+        fromId &&
+        toId &&
+        dateText &&
+        pax &&
+        fromShort &&
+        toShort
+      ) {
+        storeFormPort.push(fromPort);
+        storeToPort.push(toPort);
+        storeFormId.push(fromId);
+        storeToId.push(toId);
+        storeDate.push(dateText);
+        storeAppDate.push(dateText);
+        storeTime.push(timeAsText);
+        storePax.push(pax);
+        storeFromShortName.push(fromShort);
+        storeToShortName.push(toShort);
+        multiUnixTime.push(getUnixTimestamp(dateText, timeAsText));
+      } else {
+        isValid = false;
+      }
     });
 
     console.log("way :", "multi-city");
