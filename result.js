@@ -1,10 +1,9 @@
-// =============================================
-//     result.js file for jettly
-
-      // old file link :
-      // https://29101afcd41198dafcdd8b88cbac692a.cdn.bubble.io/f1748623551426x609338229586343400/result.js?_gl=1*12dw1e2*_gcl_au*MTQwMzQwMDk0OC4xNzQ2MzAxNDkz*_ga*MTc1OTQ4NTA5NC4xNzQ2MzAxNDI5*_ga_BFPVR2DEE2*czE3NDg1OTYyNTUkbzM4JGcxJHQxNzQ4NjIzNTk1JGo2MCRsMCRoMA
-// =============================================
-
+/*
+==============================================================
+    ✅ result.js for jettly.com
+    ✅ connect will in aircraft page
+==============================================================
+*/
 // select dom element for One way trip
 const addWay = document.querySelector(".sa_way_name");
 const flightWay = document.querySelectorAll(".sa_way_name_list");
@@ -85,7 +84,7 @@ if (getstoredData.way === "one way") {
     document.getElementById("threeway").classList.add("active_way");
   });
 } else {
-  console.log("something error");
+  console.error("something error");
 }
 
 //fill input with session storage data for one way
@@ -283,7 +282,16 @@ oneWaySubmit.addEventListener("click", function () {
 
   const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
 
-  if (fromId && toId && dateAsText && pax && formIdInput && toIdInput && fromShortName && toShortName) {
+  if (
+    fromId &&
+    toId &&
+    dateAsText &&
+    pax &&
+    formIdInput &&
+    toIdInput &&
+    fromShortName &&
+    toShortName
+  ) {
     const storeData = {
       way: "one way",
       fromId,
@@ -335,13 +343,20 @@ roundTripSubmit.addEventListener("click", function () {
   const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
   const timeStampReturn = getUnixTimestamp(returnDateAsText, timeAsTextReturn);
 
-
   const fromShortName = document.querySelector(
     ".roundfromshortcode"
   ).textContent;
   const toShortName = document.querySelector(".roundtoshortcode").textContent;
 
-  if (formIdInput && toIdInput && dateAsText && returnDateAsText && pax && fromShortName && toShortName) {
+  if (
+    formIdInput &&
+    toIdInput &&
+    dateAsText &&
+    returnDateAsText &&
+    pax &&
+    fromShortName &&
+    toShortName
+  ) {
     const storeData = {
       way: "round trip",
       formIdInput,

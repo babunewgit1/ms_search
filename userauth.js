@@ -1,5 +1,9 @@
-//utlity js
-// Utility functions for authentication system
+/*
+==============================================================
+    ✅ auth.js for jettly.com
+    ✅ connect will globally
+==============================================================
+*/
 
 function showAuthFormsWrapper() {
   const authFormsWrapper = document.getElementById("authFormsWrapper");
@@ -475,7 +479,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("signupForm").style.display = "none";
 
         // Dispatch login success event
-        window.dispatchEvent(new Event('loginSuccess'));
+        window.dispatchEvent(new Event("loginSuccess"));
 
         toastMessage.textContent = "Signup successful!";
         toast.show();
@@ -557,9 +561,9 @@ document.addEventListener("DOMContentLoaded", () => {
             // Update UI
             updateUIForLoggedInUser(userEmail);
             document.getElementById("loginForm").style.display = "none";
-            
+
             // Dispatch login success event
-            window.dispatchEvent(new Event('loginSuccess'));
+            window.dispatchEvent(new Event("loginSuccess"));
 
             toastMessage.textContent = "Login successful!";
             toast.show();

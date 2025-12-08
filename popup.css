@@ -1,3 +1,10 @@
+/*
+==============================================================
+    ✅ Popup.css for jettly.com
+    ✅ connect will in aircraft page
+==============================================================
+*/
+
 /* code for designing card in aircraft page start */
 .search_mobile {
   background-color: #f3f3f3;
@@ -379,7 +386,7 @@
 }
 
 .toggle-switcher input:checked + .slider {
-  background-color: #2196f3;
+  background-color: #ff5d47;
 }
 
 .toggle-switcher input:checked + .slider:before {
@@ -418,6 +425,7 @@
 .from_search_text,
 .to_search_text {
   margin-top: 20px;
+  display: none;
 }
 
 .from_pop_result_block {

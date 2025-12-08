@@ -1,8 +1,9 @@
-/*==================================================================
-    Search.js file for jettly
-    old url--
-    https://29101afcd41198dafcdd8b88cbac692a.cdn.bubble.io/f1763290338365x661160575373632800/search.js
-================================================================== */
+/*
+==============================================================
+    ✅ Search.js for jettly.com
+    ✅ connect will in aircraft page
+==============================================================
+*/
 
 sessionStorage.removeItem("checkedItems");
 // Debounce utility for search input
@@ -77,38 +78,49 @@ async function fetchHotDealPricing(category, itemElement) {
       const hourlyRateEl = itemElement.querySelector(".hourly_rate");
 
       if (mainPriceEl && data.response.price) {
-        mainPriceEl.textContent = `$${Math.round(data.response.price).toLocaleString()}`;
+        mainPriceEl.textContent = `$${Math.round(
+          data.response.price
+        ).toLocaleString()}`;
       }
 
       if (hourlyRateEl && data.response.hourly_rate) {
-        hourlyRateEl.textContent = `$${Math.round(data.response.hourly_rate).toLocaleString()}/hr`;
+        hourlyRateEl.textContent = `$${Math.round(
+          data.response.hourly_rate
+        ).toLocaleString()}/hr`;
       }
 
       // Update the data-calculated-price attribute on the details button
-      const itemWrapper = itemElement.closest('.item_wrapper');
+      const itemWrapper = itemElement.closest(".item_wrapper");
       if (itemWrapper && data.response.price) {
-        const detailsButton = itemWrapper.querySelector('.details-button');
+        const detailsButton = itemWrapper.querySelector(".details-button");
         if (detailsButton) {
-          detailsButton.setAttribute('data-calculated-price', Math.round(data.response.price));
+          detailsButton.setAttribute(
+            "data-calculated-price",
+            Math.round(data.response.price)
+          );
         }
       }
 
       // Update the global aircraftCalculatedValues with API price for hot deals
-      const itemId = itemElement.getAttribute('data-item-id');
+      const itemId = itemElement.getAttribute("data-item-id");
       if (itemId && data.response.price) {
-        window.aircraftCalculatedValues[itemId] = Math.round(data.response.price);
+        window.aircraftCalculatedValues[itemId] = Math.round(
+          data.response.price
+        );
       }
 
       // Update fuel stop visibility based on techstops
       if (itemId) {
-        const fuelStopElements = document.querySelectorAll(`.hot-deal-fuel-stop[data-item-id="${itemId}"]`);
+        const fuelStopElements = document.querySelectorAll(
+          `.hot-deal-fuel-stop[data-item-id="${itemId}"]`
+        );
         const techstops = data.response.techstops || 0;
-        
-        fuelStopElements.forEach(el => {
+
+        fuelStopElements.forEach((el) => {
           if (techstops > 0) {
-            el.style.display = 'block';
+            el.style.display = "block";
           } else {
-            el.style.display = 'none';
+            el.style.display = "none";
           }
         });
       }
@@ -131,17 +143,19 @@ async function fetchHotDealPricing(category, itemElement) {
 
 // Function to update all hot deal prices on the page
 async function updateHotDealPricing() {
-  const hotDealItems = document.querySelectorAll('.hotwrapper .price[data-hot-deal-category]');
-  
+  const hotDealItems = document.querySelectorAll(
+    ".hotwrapper .price[data-hot-deal-category]"
+  );
+
   // Create an array of promises for all API calls
-  const fetchPromises = Array.from(hotDealItems).map(priceElement => {
-    const category = priceElement.getAttribute('data-hot-deal-category');
+  const fetchPromises = Array.from(hotDealItems).map((priceElement) => {
+    const category = priceElement.getAttribute("data-hot-deal-category");
     if (category) {
       return fetchHotDealPricing(category, priceElement);
     }
     return Promise.resolve();
   });
-  
+
   // Wait for all API calls to complete simultaneously
   await Promise.all(fetchPromises);
 }
@@ -150,7 +164,7 @@ async function updateHotDealPricing() {
 // This ensures hot deals are properly added/removed from DOM (not just hidden)
 function handleLoginStatusChange() {
   // Re-render the current page with updated login status
-  if (typeof filterAndRender === 'function') {
+  if (typeof filterAndRender === "function") {
     filterAndRender(currentPage);
   }
 }
@@ -513,13 +527,13 @@ function handleRequestBrBtnClick() {
   const filterleg = leg
     .map((leg) => {
       const dateStart = leg.date_date;
-      
+
       // Parse date string to prevent timezone shifting
       let year, month, day;
-      
-      if (typeof dateStart === 'string') {
-        const dateStr = dateStart.split('T')[0]; // Get date part before 'T'
-        [year, month, day] = dateStr.split('-');
+
+      if (typeof dateStart === "string") {
+        const dateStr = dateStart.split("T")[0]; // Get date part before 'T'
+        [year, month, day] = dateStr.split("-");
       } else {
         // If it's a Date object, extract date components directly (no UTC conversion)
         const dateObj = new Date(dateStart);
@@ -527,16 +541,16 @@ function handleRequestBrBtnClick() {
         month = dateObj.getMonth() + 1; // getMonth() returns 0-11
         day = dateObj.getDate();
       }
-      
+
       // Create date WITHOUT timezone shifting
       const selectedDate = new Date(year, month - 1, day);
-      
+
       const formattedDateStart = selectedDate.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
       });
-      
+
       // For time formatting
       const fullDateObj = new Date(dateStart);
       const formattedTimeStart = fullDateObj.toLocaleTimeString("en-US", {
@@ -779,7 +793,7 @@ function renderPage(page, filteredSets) {
   closeDownbar();
   attachItemCheckboxListeners();
   updateCheckedItemsDisplay();
-  
+
   // Fetch and update hot deal pricing if user is logged in
   if (isLoggedIn && page === 1) {
     updateHotDealPricing();
@@ -1284,7 +1298,7 @@ function getHotDealHtml(
         <p> and similar ${
           item.class_text
         }s <br /> <img class="seat_logo" src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/674f4ca8521e970e24495468_seat.png" alt="Seat Icon" />
-          <span>${item.pax_number}</span> seats
+          <span>Up to ${item.pax_number}</span> seats
         </p>
         <div class="hot_feature">
           <p>
@@ -1308,7 +1322,9 @@ function getHotDealHtml(
           </div>
         </div>
         <p class="view_price_tologin">LOGIN TO VIEW PRICING</p>
-        <div class="price" data-hot-deal-category="${item.instant_book_hot_deal_category_text || ''}" data-item-id="${item._id}">
+        <div class="price" data-hot-deal-category="${
+          item.instant_book_hot_deal_category_text || ""
+        }" data-item-id="${item._id}">
           <h3 class="main_price"><img style="width: 100px;" src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/691376b3a1d1243d2e443b61_animation.gif" alt="" /></h3>
           <h5 class="hourly_rate"></h5>
           <p>Final Price - No Hidden Fees</p>
@@ -1317,7 +1333,9 @@ function getHotDealHtml(
 <a  class="bookinglink button fill_button request-book-btn" href="#"  data-flightrequestid="${flightRequestId}" data-type="instant" data-aircraftid="${
     item._id
   }">BOOK INSTANTLY</a>
-          <button data_got_id="${item._id}" class="details-button button fill_button grey_button" data-index="${index}">View Details <img src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/67459d1f63b186d24efc3bbe_Jettly-Search-Results-Page-(List-View-Details-Tab).png" alt="View Details Icon" />
+          <button data_got_id="${
+            item._id
+          }" class="details-button button fill_button grey_button" data-index="${index}">View Details <img src="https://cdn.prod.website-files.com/6713759f858863c516dbaa19/67459d1f63b186d24efc3bbe_Jettly-Search-Results-Page-(List-View-Details-Tab).png" alt="View Details Icon" />
           </button>
         </div>
       </div>
@@ -4072,7 +4090,7 @@ function initialize() {
       pax: sessionData.pax,
       date: sessionData.timeStamp,
       "leg_1_departure_include_nearby?": sessionData.isFromNearby,
-      "leg _1_arrival_include_nearby?": sessionData.isToNearby,
+      "leg_1_arrival_include_nearby?": sessionData.isToNearby,
     };
     apiUrl = apiUrlOneWay;
   } else if (way === "round trip") {
@@ -4093,9 +4111,9 @@ function initialize() {
       App_Out_Date_As_Text: sessionData.appDate,
       App_Ret_Date_As_Text: sessionData.appDateReturn,
       "leg_1_departure_include_nearby?": sessionData.isFromNearby,
-      "leg _1_arrival_include_nearby?": sessionData.isToNearby,
+      "leg_1_arrival_include_nearby?": sessionData.isToNearby,
       "leg_2_departure_include_nearby?": sessionData.isToNearby,
-      "leg _2_arrival_include_nearby?": sessionData.isFromNearby,
+      "leg_2_arrival_include_nearby?": sessionData.isFromNearby,
     };
     apiUrl = apiUrlRoundTrip;
   } else if (way === "multi-city") {
@@ -4440,19 +4458,19 @@ function initialize() {
 
 document.addEventListener("DOMContentLoaded", function () {
   initialize();
-  
+
   // Listen for custom login/logout events and re-render page
-  window.addEventListener("userLoggedIn", function() {
+  window.addEventListener("userLoggedIn", function () {
     handleLoginStatusChange();
   });
-  
-  window.addEventListener("userLoggedOut", function() {
+
+  window.addEventListener("userLoggedOut", function () {
     handleLoginStatusChange();
   });
-  
+
   // Monitor cookie changes via a polling mechanism
   let lastLoginState = isUserLoggedIn();
-  setInterval(function() {
+  setInterval(function () {
     const currentLoginState = isUserLoggedIn();
     if (currentLoginState !== lastLoginState) {
       lastLoginState = currentLoginState;
