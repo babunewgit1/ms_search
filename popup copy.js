@@ -1790,74 +1790,55 @@ document.addEventListener("DOMContentLoaded", function () {
 document
   .querySelector(".oneway_search_btn")
   .addEventListener("click", function () {
-    const formIdInputEl = document.querySelector(".owfaname span.light_font");
-    const toIdInputEl = document.querySelector(".owtaname span.light_font");
-    const fromIdEl = document.querySelector(".owfaid");
-    const toIdEl = document.querySelector(".owtaid");
-    const dateAsTextEl = document.querySelector(".owdateastext");
-    const paxEl = document.querySelector("#mstaboneway .paxcount");
-    const fromShortNameEl = document.querySelector(".owfashort");
-    const toShortNameEl = document.querySelector(".owtashort");
+    const formIdInput = document.querySelector(
+      ".owfaname span.light_font"
+    ).textContent;
+    const toIdInput = document.querySelector(
+      ".owtaname span.light_font"
+    ).textContent;
+    const fromId = document.querySelector(".owfaid").textContent;
+    const toId = document.querySelector(".owtaid").textContent;
+    const dateAsText = document.querySelector(".owdateastext").textContent;
+    const timeAsText = "00:00:00";
+    const pax = document.querySelector("#mstaboneway .paxcount").textContent;
+    const appDate = dateAsText;
+    const fromShortName = document.querySelector(".owfashort").textContent;
+    const toShortName = document.querySelector(".owtashort").textContent;
+    const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
 
+    // Get nearby airport checkbox values
+    const isFromNearby = oneWayFromNearby ? "Yes" : "No";
+    const isToNearby = oneWayToNearby ? "Yes" : "No";
     if (
-      formIdInputEl &&
-      toIdInputEl &&
-      fromIdEl &&
-      toIdEl &&
-      dateAsTextEl &&
-      paxEl &&
-      fromShortNameEl &&
-      toShortNameEl
+      fromId &&
+      toId &&
+      dateAsText &&
+      pax &&
+      formIdInput &&
+      toIdInput &&
+      fromShortName &&
+      toShortName
     ) {
-      const formIdInput = formIdInputEl.textContent;
-      const toIdInput = toIdInputEl.textContent;
-      const fromId = fromIdEl.textContent;
-      const toId = toIdEl.textContent;
-      const dateAsText = dateAsTextEl.textContent;
-      const timeAsText = "00:00:00";
-      const pax = paxEl.textContent;
-      const appDate = dateAsText;
-      const fromShortName = fromShortNameEl.textContent;
-      const toShortName = toShortNameEl.textContent;
-      const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
+      const storeData = {
+        way: "one way",
+        fromId,
+        toId,
+        dateAsText,
+        timeAsText,
+        pax,
+        appDate,
+        timeStamp,
+        formIdInput,
+        toIdInput,
+        fromShortName,
+        toShortName,
+        isFromNearby,
+        isToNearby,
+      };
 
-      // Get nearby airport checkbox values
-      const isFromNearby = oneWayFromNearby ? "Yes" : "No";
-      const isToNearby = oneWayToNearby ? "Yes" : "No";
-
-      if (
-        fromId &&
-        toId &&
-        dateAsText &&
-        pax &&
-        formIdInput &&
-        toIdInput &&
-        fromShortName &&
-        toShortName
-      ) {
-        const storeData = {
-          way: "one way",
-          fromId,
-          toId,
-          dateAsText,
-          timeAsText,
-          pax,
-          appDate,
-          timeStamp,
-          formIdInput,
-          toIdInput,
-          fromShortName,
-          toShortName,
-          isFromNearby,
-          isToNearby,
-        };
-
-        saveRecentSearch(storeData);
-        sessionStorage.setItem("storeData", JSON.stringify(storeData));
-        window.location.href = `/aircraft`;
-      } else {
-        alert("Please fill up the form properly");
-      }
+      saveRecentSearch(storeData);
+      sessionStorage.setItem("storeData", JSON.stringify(storeData));
+      window.location.href = `/aircraft`;
     } else {
       alert("Please fill up the form properly");
     }
@@ -1867,105 +1848,89 @@ document
 document
   .querySelector(".round_search_btn")
   .addEventListener("click", function () {
-    const formIdInputEl = document.querySelector(".rwfaname span.light_font");
-    const toIdInputEl = document.querySelector(".rwtaname span.light_font");
-    const fromIdEl = document.querySelector(".rwfaid");
-    const toIdEl = document.querySelector(".rwtaid");
-    const dateAsTextEl = document.querySelector(".rwdateastext");
-    const returnDateAsTextEl = document.querySelector(".rwreturndate");
-    const paxEl = document.querySelector("#mstabroundtrip .paxcount");
-    const fromShortNameEl = document.querySelector(".rwfashort");
-    const toShortNameEl = document.querySelector(".rwtashort");
+    const formIdInput = document.querySelector(
+      ".rwfaname span.light_font"
+    ).textContent;
+    const toIdInput = document.querySelector(
+      ".rwtaname span.light_font"
+    ).textContent;
 
+    const fromInputReturn = document.querySelector(
+      ".rwtaname span.light_font"
+    ).textContent;
+    const toInputReturn = document.querySelector(
+      ".rwfaname span.light_font"
+    ).textContent;
+
+    const fromId = document.querySelector(".rwfaid").textContent;
+    const toId = document.querySelector(".rwtaid").textContent;
+
+    const returnFromId = document.querySelector(".rwtaid").textContent;
+    const returnToId = document.querySelector(".rwfaid").textContent;
+
+    const dateAsText = document.querySelector(".rwdateastext").textContent;
+    const returnDateAsText =
+      document.querySelector(".rwreturndate").textContent;
+
+    const timeAsText = "00:00:00";
+    const timeAsTextReturn = "00:00:00";
+
+    const pax = document.querySelector("#mstabroundtrip .paxcount").textContent;
+    const paxReturn = pax;
+
+    const appDate = dateAsText;
+    const appDateReturn = returnDateAsText;
+
+    const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
+    const timeStampReturn = getUnixTimestamp(
+      returnDateAsText,
+      timeAsTextReturn
+    );
+
+    const fromShortName = document.querySelector(".rwfashort").textContent;
+    const toShortName = document.querySelector(".rwtashort").textContent;
+
+    // Get nearby airport checkbox values
+    const isFromNearby = roundTripFromNearby ? "Yes" : "No";
+    const isToNearby = roundTripToNearby ? "Yes" : "No";
     if (
-      formIdInputEl &&
-      toIdInputEl &&
-      fromIdEl &&
-      toIdEl &&
-      dateAsTextEl &&
-      returnDateAsTextEl &&
-      paxEl &&
-      fromShortNameEl &&
-      toShortNameEl
+      formIdInput &&
+      toIdInput &&
+      dateAsText &&
+      returnDateAsText &&
+      pax &&
+      fromShortName &&
+      toShortName
     ) {
-      const formIdInput = formIdInputEl.textContent;
-      const toIdInput = toIdInputEl.textContent;
-
-      const fromInputReturn = toIdInput; // Swapped for return leg
-      const toInputReturn = formIdInput; // Swapped for return leg
-
-      const fromId = fromIdEl.textContent;
-      const toId = toIdEl.textContent;
-
-      const returnFromId = toId; // Swapped
-      const returnToId = fromId; // Swapped
-
-      const dateAsText = dateAsTextEl.textContent;
-      const returnDateAsText = returnDateAsTextEl.textContent;
-
-      const timeAsText = "00:00:00";
-      const timeAsTextReturn = "00:00:00";
-
-      const pax = paxEl.textContent;
-      const paxReturn = pax;
-
-      const appDate = dateAsText;
-      const appDateReturn = returnDateAsText;
-
-      const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
-      const timeStampReturn = getUnixTimestamp(
+      const storeData = {
+        way: "round trip",
+        formIdInput,
+        toIdInput,
+        fromInputReturn,
+        toInputReturn,
+        fromId,
+        toId,
+        returnFromId,
+        returnToId,
+        dateAsText,
         returnDateAsText,
-        timeAsTextReturn
-      );
+        timeAsText,
+        timeAsTextReturn,
+        pax,
+        paxReturn,
+        appDate,
+        appDateReturn,
+        timeStamp,
+        timeStampReturn,
+        fromShortName,
+        toShortName,
+        isFromNearby,
+        isToNearby,
+      };
 
-      const fromShortName = fromShortNameEl.textContent;
-      const toShortName = toShortNameEl.textContent;
-
-      // Get nearby airport checkbox values
-      const isFromNearby = roundTripFromNearby ? "Yes" : "No";
-      const isToNearby = roundTripToNearby ? "Yes" : "No";
-
-      if (
-        formIdInput &&
-        toIdInput &&
-        dateAsText &&
-        returnDateAsText &&
-        pax &&
-        fromShortName &&
-        toShortName
-      ) {
-        const storeData = {
-          way: "round trip",
-          formIdInput,
-          toIdInput,
-          fromInputReturn,
-          toInputReturn,
-          fromId,
-          toId,
-          returnFromId,
-          returnToId,
-          dateAsText,
-          returnDateAsText,
-          timeAsText,
-          timeAsTextReturn,
-          pax,
-          paxReturn,
-          appDate,
-          appDateReturn,
-          timeStamp,
-          timeStampReturn,
-          fromShortName,
-          toShortName,
-          isFromNearby,
-          isToNearby,
-        };
-
-        saveRecentSearch(storeData);
-        sessionStorage.setItem("storeData", JSON.stringify(storeData));
-        window.location.href = `/aircraft`;
-      } else {
-        alert("Please fill up the form properly");
-      }
+      saveRecentSearch(storeData);
+      sessionStorage.setItem("storeData", JSON.stringify(storeData));
+      window.location.href = `/aircraft`;
     } else {
       alert("Please fill up the form properly");
     }

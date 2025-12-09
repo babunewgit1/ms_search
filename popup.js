@@ -1095,8 +1095,8 @@ if (addNewBtn) {
     const isPredefineVisible =
       predefineBlock && predefineBlock.style.display !== "none";
 
-    if (currentFlights.length >= 10) {
-      alert("You can not add more flights");
+    if (currentFlights.length >= 9) {
+      showErrorToast("You can not add more flights");
       return;
     }
 
@@ -1693,6 +1693,11 @@ document.addEventListener("DOMContentLoaded", function () {
       if (paxTextElement) {
         currentPaxElement = paxTextElement;
 
+        // Reset counters to 0
+        document.querySelectorAll(".pax_count").forEach((span) => {
+          span.textContent = "0";
+        });
+
         if (paxPopup) paxPopup.style.display = "block";
       }
     }
@@ -1738,7 +1743,7 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       if (totalPax === 0) {
-        alert("add atletast 1 passenger");
+        showErrorToast("Add at least 1 passenger");
         return;
       }
 
@@ -1786,189 +1791,175 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
+function showErrorToast(message) {
+  const toastMessage = document.getElementById("toastMessage");
+  if (toastMessage && window.toast) {
+    toastMessage.textContent = message;
+    window.toast.show();
+  } else {
+    alert(message);
+  }
+}
+
 // One Way Submission
 document
   .querySelector(".oneway_search_btn")
   .addEventListener("click", function () {
-    const formIdInputEl = document.querySelector(".owfaname span.light_font");
-    const toIdInputEl = document.querySelector(".owtaname span.light_font");
-    const fromIdEl = document.querySelector(".owfaid");
-    const toIdEl = document.querySelector(".owtaid");
-    const dateAsTextEl = document.querySelector(".owdateastext");
-    const paxEl = document.querySelector("#mstaboneway .paxcount");
-    const fromShortNameEl = document.querySelector(".owfashort");
-    const toShortNameEl = document.querySelector(".owtashort");
+    const formIdInput = document.querySelector(
+      ".owfaname span.light_font"
+    )?.textContent;
+    const toIdInput = document.querySelector(
+      ".owtaname span.light_font"
+    )?.textContent;
+    const fromId = document.querySelector(".owfaid")?.textContent;
+    const toId = document.querySelector(".owtaid")?.textContent;
+    const dateAsText = document.querySelector(".owdateastext")?.textContent;
+    const timeAsText = "00:00:00";
+    const pax = document.querySelector("#mstaboneway .paxcount")?.textContent;
+    const appDate = dateAsText;
+    const fromShortName = document.querySelector(".owfashort")?.textContent;
+    const toShortName = document.querySelector(".owtashort")?.textContent;
+    const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
 
-    if (
-      formIdInputEl &&
-      toIdInputEl &&
-      fromIdEl &&
-      toIdEl &&
-      dateAsTextEl &&
-      paxEl &&
-      fromShortNameEl &&
-      toShortNameEl
-    ) {
-      const formIdInput = formIdInputEl.textContent;
-      const toIdInput = toIdInputEl.textContent;
-      const fromId = fromIdEl.textContent;
-      const toId = toIdEl.textContent;
-      const dateAsText = dateAsTextEl.textContent;
-      const timeAsText = "00:00:00";
-      const pax = paxEl.textContent;
-      const appDate = dateAsText;
-      const fromShortName = fromShortNameEl.textContent;
-      const toShortName = toShortNameEl.textContent;
-      const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
+    // Get nearby airport checkbox values
+    const isFromNearby = oneWayFromNearby ? "Yes" : "No";
+    const isToNearby = oneWayToNearby ? "Yes" : "No";
 
-      // Get nearby airport checkbox values
-      const isFromNearby = oneWayFromNearby ? "Yes" : "No";
-      const isToNearby = oneWayToNearby ? "Yes" : "No";
-
-      if (
-        fromId &&
-        toId &&
-        dateAsText &&
-        pax &&
-        formIdInput &&
-        toIdInput &&
-        fromShortName &&
-        toShortName
-      ) {
-        const storeData = {
-          way: "one way",
-          fromId,
-          toId,
-          dateAsText,
-          timeAsText,
-          pax,
-          appDate,
-          timeStamp,
-          formIdInput,
-          toIdInput,
-          fromShortName,
-          toShortName,
-          isFromNearby,
-          isToNearby,
-        };
-
-        saveRecentSearch(storeData);
-        sessionStorage.setItem("storeData", JSON.stringify(storeData));
-        window.location.href = `/aircraft`;
-      } else {
-        alert("Please fill up the form properly");
-      }
-    } else {
-      alert("Please fill up the form properly");
+    if (!fromId || !formIdInput || !fromShortName) {
+      showErrorToast("Please select a departure airport");
+      return;
     }
+    if (!toId || !toIdInput || !toShortName) {
+      showErrorToast("Please select an arrival airport");
+      return;
+    }
+    if (!dateAsText) {
+      showErrorToast("Please select a date");
+      return;
+    }
+    if (!pax) {
+      showErrorToast("Please select passengers");
+      return;
+    }
+
+    const storeData = {
+      way: "one way",
+      fromId,
+      toId,
+      dateAsText,
+      timeAsText,
+      pax,
+      appDate,
+      timeStamp,
+      formIdInput,
+      toIdInput,
+      fromShortName,
+      toShortName,
+      isFromNearby,
+      isToNearby,
+    };
+
+    saveRecentSearch(storeData);
+    sessionStorage.setItem("storeData", JSON.stringify(storeData));
+    window.location.href = `/aircraft`;
   });
 
 // ✅ Round Trip Submission
 document
   .querySelector(".round_search_btn")
   .addEventListener("click", function () {
-    const formIdInputEl = document.querySelector(".rwfaname span.light_font");
-    const toIdInputEl = document.querySelector(".rwtaname span.light_font");
-    const fromIdEl = document.querySelector(".rwfaid");
-    const toIdEl = document.querySelector(".rwtaid");
-    const dateAsTextEl = document.querySelector(".rwdateastext");
-    const returnDateAsTextEl = document.querySelector(".rwreturndate");
-    const paxEl = document.querySelector("#mstabroundtrip .paxcount");
-    const fromShortNameEl = document.querySelector(".rwfashort");
-    const toShortNameEl = document.querySelector(".rwtashort");
+    const formIdInput = document.querySelector(
+      ".rwfaname span.light_font"
+    )?.textContent;
+    const toIdInput = document.querySelector(
+      ".rwtaname span.light_font"
+    )?.textContent;
 
-    if (
-      formIdInputEl &&
-      toIdInputEl &&
-      fromIdEl &&
-      toIdEl &&
-      dateAsTextEl &&
-      returnDateAsTextEl &&
-      paxEl &&
-      fromShortNameEl &&
-      toShortNameEl
-    ) {
-      const formIdInput = formIdInputEl.textContent;
-      const toIdInput = toIdInputEl.textContent;
+    const fromInputReturn = toIdInput;
+    const toInputReturn = formIdInput;
 
-      const fromInputReturn = toIdInput; // Swapped for return leg
-      const toInputReturn = formIdInput; // Swapped for return leg
+    const fromId = document.querySelector(".rwfaid")?.textContent;
+    const toId = document.querySelector(".rwtaid")?.textContent;
 
-      const fromId = fromIdEl.textContent;
-      const toId = toIdEl.textContent;
+    const returnFromId = toId;
+    const returnToId = fromId;
 
-      const returnFromId = toId; // Swapped
-      const returnToId = fromId; // Swapped
+    const dateAsText = document.querySelector(".rwdateastext")?.textContent;
+    const returnDateAsText =
+      document.querySelector(".rwreturndate")?.textContent;
 
-      const dateAsText = dateAsTextEl.textContent;
-      const returnDateAsText = returnDateAsTextEl.textContent;
+    const timeAsText = "00:00:00";
+    const timeAsTextReturn = "00:00:00";
 
-      const timeAsText = "00:00:00";
-      const timeAsTextReturn = "00:00:00";
+    const pax = document.querySelector("#mstabroundtrip .paxcount")?.textContent;
+    const paxReturn = pax;
 
-      const pax = paxEl.textContent;
-      const paxReturn = pax;
+    const appDate = dateAsText;
+    const appDateReturn = returnDateAsText;
 
-      const appDate = dateAsText;
-      const appDateReturn = returnDateAsText;
+    const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
+    const timeStampReturn = getUnixTimestamp(
+      returnDateAsText,
+      timeAsTextReturn
+    );
 
-      const timeStamp = getUnixTimestamp(dateAsText, timeAsText);
-      const timeStampReturn = getUnixTimestamp(
-        returnDateAsText,
-        timeAsTextReturn
-      );
+    const fromShortName = document.querySelector(".rwfashort")?.textContent;
+    const toShortName = document.querySelector(".rwtashort")?.textContent;
 
-      const fromShortName = fromShortNameEl.textContent;
-      const toShortName = toShortNameEl.textContent;
+    // Get nearby airport checkbox values
+    const isFromNearby = roundTripFromNearby ? "Yes" : "No";
+    const isToNearby = roundTripToNearby ? "Yes" : "No";
 
-      // Get nearby airport checkbox values
-      const isFromNearby = roundTripFromNearby ? "Yes" : "No";
-      const isToNearby = roundTripToNearby ? "Yes" : "No";
-
-      if (
-        formIdInput &&
-        toIdInput &&
-        dateAsText &&
-        returnDateAsText &&
-        pax &&
-        fromShortName &&
-        toShortName
-      ) {
-        const storeData = {
-          way: "round trip",
-          formIdInput,
-          toIdInput,
-          fromInputReturn,
-          toInputReturn,
-          fromId,
-          toId,
-          returnFromId,
-          returnToId,
-          dateAsText,
-          returnDateAsText,
-          timeAsText,
-          timeAsTextReturn,
-          pax,
-          paxReturn,
-          appDate,
-          appDateReturn,
-          timeStamp,
-          timeStampReturn,
-          fromShortName,
-          toShortName,
-          isFromNearby,
-          isToNearby,
-        };
-
-        saveRecentSearch(storeData);
-        sessionStorage.setItem("storeData", JSON.stringify(storeData));
-        window.location.href = `/aircraft`;
-      } else {
-        alert("Please fill up the form properly");
-      }
-    } else {
-      alert("Please fill up the form properly");
+    if (!formIdInput || !fromShortName) {
+      showErrorToast("Please select a departure airport");
+      return;
     }
+    if (!toIdInput || !toShortName) {
+      showErrorToast("Please select an arrival airport");
+      return;
+    }
+    if (!dateAsText) {
+      showErrorToast("Please select a departure date");
+      return;
+    }
+    if (!returnDateAsText) {
+      showErrorToast("Please select a return date");
+      return;
+    }
+    if (!pax) {
+      showErrorToast("Please select passengers");
+      return;
+    }
+
+    const storeData = {
+      way: "round trip",
+      formIdInput,
+      toIdInput,
+      fromInputReturn,
+      toInputReturn,
+      fromId,
+      toId,
+      returnFromId,
+      returnToId,
+      dateAsText,
+      returnDateAsText,
+      timeAsText,
+      timeAsTextReturn,
+      pax,
+      paxReturn,
+      appDate,
+      appDateReturn,
+      timeStamp,
+      timeStampReturn,
+      fromShortName,
+      toShortName,
+      isFromNearby,
+      isToNearby,
+    };
+
+    saveRecentSearch(storeData);
+    sessionStorage.setItem("storeData", JSON.stringify(storeData));
+    window.location.href = `/aircraft`;
   });
 
 // ✅ Multi-City Submission
@@ -1999,7 +1990,9 @@ document
     let isValid = true;
     const timeAsText = "00:00:00";
 
-    containers.forEach((container) => {
+    let errorMessage = "";
+
+    containers.forEach((container, index) => {
       const fromPort = container.querySelector(
         ".mcfaname span.light_font"
       )?.textContent;
@@ -2013,16 +2006,25 @@ document
       const fromShort = container.querySelector(".mcfashort")?.textContent;
       const toShort = container.querySelector(".mctashort")?.textContent;
 
-      if (
-        fromPort &&
-        toPort &&
-        fromId &&
-        toId &&
-        dateText &&
-        pax &&
-        fromShort &&
-        toShort
-      ) {
+      if (!fromPort || !fromId || !fromShort) {
+        if (!errorMessage)
+          errorMessage = `Flight ${index + 1}: Please select a departure airport`;
+        isValid = false;
+      } else if (!toPort || !toId || !toShort) {
+        if (!errorMessage)
+          errorMessage = `Flight ${index + 1}: Please select an arrival airport`;
+        isValid = false;
+      } else if (!dateText) {
+        if (!errorMessage)
+          errorMessage = `Flight ${index + 1}: Please select a date`;
+        isValid = false;
+      } else if (!pax) {
+        if (!errorMessage)
+          errorMessage = `Flight ${index + 1}: Please select passengers`;
+        isValid = false;
+      }
+
+      if (isValid) {
         storeFormPort.push(fromPort);
         storeToPort.push(toPort);
         storeFormId.push(fromId);
@@ -2034,8 +2036,6 @@ document
         storeFromShortName.push(fromShort);
         storeToShortName.push(toShort);
         multiUnixTime.push(getUnixTimestamp(dateText, timeAsText));
-      } else {
-        isValid = false;
       }
     });
     if (isValid && containers.length > 0) {
@@ -2057,6 +2057,6 @@ document
       sessionStorage.setItem("storeData", JSON.stringify(storeData));
       window.location.href = `/aircraft`;
     } else {
-      alert("Please fill up the form properly.");
+      showErrorToast(errorMessage || "Please fill up the form properly.");
     }
   });
